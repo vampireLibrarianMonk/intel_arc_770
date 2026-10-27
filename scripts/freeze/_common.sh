@@ -14,6 +14,33 @@ log()  { echo "[freeze] $*"; }
 warn() { echo "[freeze][WARN] $*" >&2; }
 die()  { echo "[freeze][ERROR] $*" >&2; exit 1; }
 
+# --- Dry-run support -----------------------------------------------------------
+# Set FREEZE_DRY_RUN=1 (or pass --dry-run, parsed by each script) to preview actions
+# without performing downloads, builds, image captures, or manifest writes.
+freeze_parse_dry_run() {
+  for arg in "$@"; do case "$arg" in --dry-run) FREEZE_DRY_RUN=1;; esac; done
+  export FREEZE_DRY_RUN="${FREEZE_DRY_RUN:-0}"
+}
+
+is_dry_run() { [ "${FREEZE_DRY_RUN:-0}" = "1" ]; }
+
+# mkdir unless dry-run (keeps dry-run strictly zero-write).
+mkdir_unless_dry() { is_dry_run || mkdir -p "$@"; }
+
+# dry_note "<what would happen>" -> print a [would] line in dry-run, else no-op.
+dry_note() { is_dry_run && echo "[freeze][would] $*"; }
+
+# run_or_dry "<description>" cmd args...  -> execute, or print it in dry-run.
+run_or_dry() {
+  local desc="$1"; shift
+  if is_dry_run; then
+    echo "[freeze][would] ${desc}"
+    echo "[freeze][would]   \$ $*"
+    return 0
+  fi
+  "$@"
+}
+
 # have CMD -> true if command exists
 have() { command -v "$1" >/dev/null 2>&1; }
 
@@ -47,6 +74,10 @@ require_good_run_confirmation() {
 # Write SHA-256 sums for everything under a directory into MANIFEST.sha256.
 write_sha256_manifest() {
   local dir="$1"
+  if is_dry_run; then
+    echo "[freeze][would] write ${dir}/MANIFEST.sha256 (sha256 of all files)"
+    return 0
+  fi
   ( cd "${dir}" && find . -type f ! -name 'MANIFEST.sha256' -print0 \
       | sort -z \
       | xargs -0 sha256sum ) > "${dir}/MANIFEST.sha256"

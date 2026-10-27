@@ -34,6 +34,21 @@ scripts/freeze/freeze_all.sh --i-say-so --note="..." \
 
 Snapshots land in `artifacts/freeze/<UTC-timestamp>/` (git-ignored).
 
+## Rehearse first with `--dry-run`
+
+Preview exactly what every layer would download, build, or image — without doing any of
+it. Recommended before the first real freeze on a new host.
+
+```bash
+scripts/freeze/freeze_all.sh --i-say-so --note="rehearsal" --dry-run --guidance
+```
+
+`--dry-run` works on the orchestrator and every individual layer script. It still requires
+the manual gate (`--i-say-so` + `--note`). It prints `[would]` lines for each action and
+writes no wheels, `.deb`s, bundles, images, or checksum manifests. It is also a useful
+probe: it reports which candidate apt packages actually exist on the host, whether a
+virtualenv is active, and whether the git tree is dirty.
+
 ## Verify integrity (now or years later)
 
 ```bash

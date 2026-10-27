@@ -16,10 +16,11 @@ for arg in "$@"; do case "$arg" in
   --image=*)      IMAGE="${arg#--image=}";;
   --dockerfile=*) DOCKERFILE="${arg#--dockerfile=}";;
 esac; done
+freeze_parse_dry_run "$@"
 NOTE="$(require_good_run_confirmation "$@")"
 [ -n "${SNAPSHOT}" ] || SNAPSHOT="${FREEZE_ROOT_DEFAULT}/$(freeze_timestamp)"
 OUT="${SNAPSHOT}/container"
-mkdir -p "${OUT}"
+mkdir_unless_dry "${OUT}"
 
 # Pick an engine.
 ENGINE=""
@@ -34,6 +35,16 @@ log "using container engine: ${ENGINE} (note: ${NOTE})"
 
 # Build the image from the frozen Dockerfile.
 log "building ${IMAGE} from ${DOCKERFILE}"
+if is_dry_run; then
+  dry_note "build image ${IMAGE} from ${DOCKERFILE} (context: ${REPO_ROOT})"
+  dry_note "  \$ ${ENGINE} build -f ${DOCKERFILE} -t ${IMAGE} ${REPO_ROOT}"
+  dry_note "save image -> ${OUT}/image.tar"
+  dry_note "  \$ ${ENGINE} save ${IMAGE} -o ${OUT}/image.tar"
+  dry_note "generate load_container_offline.sh"
+  log "DRY RUN complete: previewed container freeze (no build/save)."
+  echo "${SNAPSHOT}"
+  exit 0
+fi
 "${ENGINE}" build -f "${DOCKERFILE}" -t "${IMAGE}" "${REPO_ROOT}" \
   2>&1 | tee "${OUT}/build.log"
 

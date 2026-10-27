@@ -20,12 +20,14 @@ for arg in "$@"; do case "$arg" in
   --snapshot=*) SNAPSHOT="${arg#--snapshot=}";;
   --include-kernel) INCLUDE_KERNEL=1;;
 esac; done
+freeze_parse_dry_run "$@"
 NOTE="$(require_good_run_confirmation "$@")"
 [ -n "${SNAPSHOT}" ] || SNAPSHOT="${FREEZE_ROOT_DEFAULT}/$(freeze_timestamp)"
 OUT="${SNAPSHOT}/system"
-mkdir -p "${OUT}/debs"
+mkdir_unless_dry "${OUT}/debs"
 
 log "freezing system GPU stack (note: ${NOTE})"
+is_dry_run && log "DRY RUN: no packages downloaded, no manifest written."
 have dpkg || die "not a dpkg-based system; use the container (A2) or full image (A3) instead"
 have apt-get || die "apt-get not found"
 
@@ -44,14 +46,26 @@ USERSPACE_PKGS=(
 )
 
 # 1. Record exactly-installed versions of anything GPU-related (the source of truth).
-dpkg -l | grep -Ei 'opencl|level-zero|libze|igc|gmm|intel-gpu|i915|xe ' \
-  > "${OUT}/installed_versions.txt" || true
-log "recorded installed GPU-related package versions"
+if is_dry_run; then
+  dry_note "record installed GPU-related package versions -> system/installed_versions.txt"
+else
+  dpkg -l | grep -Ei 'opencl|level-zero|libze|igc|gmm|intel-gpu|i915|xe ' \
+    > "${OUT}/installed_versions.txt" || true
+  log "recorded installed GPU-related package versions"
+fi
 
 # 2. Download .debs (+ dependencies) without installing.
 #    apt-get download does not pull deps; use a download-only install plan instead.
 download_with_deps() {
   local pkg="$1"
+  if is_dry_run; then
+    if apt-cache show "${pkg}" >/dev/null 2>&1; then
+      echo "[freeze][would] download ${pkg} (+deps) into system/debs/"
+    else
+      echo "[freeze][would] SKIP ${pkg} (not in apt cache)"
+    fi
+    return 0
+  fi
   if ! apt-cache show "${pkg}" >/dev/null 2>&1; then
     warn "package not available in apt cache: ${pkg} (skipping)"
     return 0
@@ -67,10 +81,6 @@ for pkg in "${USERSPACE_PKGS[@]}"; do
   download_with_deps "${pkg}"
 done
 
-# Move any .debs apt placed in its partial/archive layout into debs/ flat.
-find "${OUT}/debs" -name '*.deb' -exec mv -n {} "${OUT}/debs/" \; 2>/dev/null || true
-log "cached $(find "${OUT}/debs" -name '*.deb' | wc -l) .deb files"
-
 # 3. Optional kernel/i915 — with a loud caveat.
 if [ "${INCLUDE_KERNEL}" -eq 1 ]; then
   warn "including kernel/i915 .debs — NOT guaranteed to install on a future OS."
@@ -78,7 +88,22 @@ if [ "${INCLUDE_KERNEL}" -eq 1 ]; then
   for pkg in "linux-image-${KVER}" "linux-modules-${KVER}" "linux-modules-extra-${KVER}"; do
     download_with_deps "${pkg}"
   done
-  echo "Kernel ${KVER} cached for reference only. Prefer the full image (A3) for kernel reproduction." \
+fi
+
+if is_dry_run; then
+  [ "${INCLUDE_KERNEL}" -eq 1 ] && dry_note "write system/KERNEL_CAVEAT.txt"
+  dry_note "flatten .debs into system/debs/ and generate install_system_offline.sh"
+  log "DRY RUN complete: previewed system freeze (no downloads)."
+  echo "${SNAPSHOT}"
+  exit 0
+fi
+
+# Move any .debs apt placed in its partial/archive layout into debs/ flat.
+find "${OUT}/debs" -name '*.deb' -exec mv -n {} "${OUT}/debs/" \; 2>/dev/null || true
+log "cached $(find "${OUT}/debs" -name '*.deb' | wc -l) .deb files"
+
+if [ "${INCLUDE_KERNEL}" -eq 1 ]; then
+  echo "Kernel $(uname -r) cached for reference only. Prefer the full image (A3) for kernel reproduction." \
     > "${OUT}/KERNEL_CAVEAT.txt"
 fi
 

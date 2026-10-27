@@ -22,10 +22,11 @@ for arg in "$@"; do case "$arg" in
   --powered-off) POWERED_OFF=1;;
   --guidance)    GUIDANCE=1;;
 esac; done
+freeze_parse_dry_run "$@"
 NOTE="$(require_good_run_confirmation "$@")"
 [ -n "${SNAPSHOT}" ] || SNAPSHOT="${FREEZE_ROOT_DEFAULT}/$(freeze_timestamp)"
 OUT="${SNAPSHOT}/image"
-mkdir -p "${OUT}"
+mkdir_unless_dry "${OUT}"
 
 log "A3 full-image freeze (note: ${NOTE})"
 
@@ -69,15 +70,26 @@ DOC
   log "wrote ${OUT}/FULL_IMAGE_GUIDANCE.md"
 }
 
-write_guidance
+if is_dry_run; then
+  dry_note "write ${OUT}/FULL_IMAGE_GUIDANCE.md"
+else
+  write_guidance
+fi
 
 if [ -n "${QCOW2}" ]; then
-  have qemu-img || die "qemu-img not found; install qemu-utils or use --guidance"
+  # Safety checks first, independent of whether qemu-img is installed.
   [ -f "${QCOW2}" ] || die "qcow2 not found: ${QCOW2}"
   [ "${POWERED_OFF}" -eq 1 ] || die "refusing to copy a possibly-running guest; pass --powered-off after a clean shutdown"
-  log "compressing qcow2 -> ${OUT}/arc-a770-good-run.qcow2 (this can take a while)"
-  qemu-img convert -O qcow2 -c "${QCOW2}" "${OUT}/arc-a770-good-run.qcow2"
-  log "qcow2 captured"
+  if is_dry_run; then
+    have qemu-img || warn "qemu-img not installed; a real run would need qemu-utils"
+    dry_note "compress qcow2 ${QCOW2} -> ${OUT}/arc-a770-good-run.qcow2"
+    dry_note "  \$ qemu-img convert -O qcow2 -c ${QCOW2} ${OUT}/arc-a770-good-run.qcow2"
+  else
+    have qemu-img || die "qemu-img not found; install qemu-utils or use --guidance"
+    log "compressing qcow2 -> ${OUT}/arc-a770-good-run.qcow2 (this can take a while)"
+    qemu-img convert -O qcow2 -c "${QCOW2}" "${OUT}/arc-a770-good-run.qcow2"
+    log "qcow2 captured"
+  fi
 elif [ "${GUIDANCE}" -eq 1 ]; then
   log "guidance-only mode: no image captured. See FULL_IMAGE_GUIDANCE.md"
 else

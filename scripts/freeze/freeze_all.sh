@@ -19,31 +19,39 @@ for arg in "$@"; do case "$arg" in
   --no-source)    DO_SOURCE=0;;
   --no-container) DO_CONTAINER=0;;
   --no-image)     DO_IMAGE=0;;
+  --dry-run)      ;;  # handled globally via freeze_parse_dry_run; not re-passed here
   *)              PASSTHRU+=("$arg");;
 esac; done
 
 NOTE="$(require_good_run_confirmation "$@")"
+freeze_parse_dry_run "$@"
 SNAPSHOT="${FREEZE_ROOT_DEFAULT}/$(freeze_timestamp)"
-mkdir -p "${SNAPSHOT}"
+mkdir_unless_dry "${SNAPSHOT}"
 log "freeze snapshot: ${SNAPSHOT}"
 log "good-run note (operator-declared): ${NOTE}"
+is_dry_run && log "DRY RUN: previewing all layers; nothing downloaded, built, or imaged."
 
 HERE="$(dirname "${BASH_SOURCE[0]}")"
 SNAP_ARG="--snapshot=${SNAPSHOT}"
+STATUS_LINES=()
+
+record_status() { # record_status "<label>: <state>"
+  STATUS_LINES+=("$1")
+  is_dry_run || echo "$1" >> "${SNAPSHOT}/freeze_status.txt"
+}
 
 run_layer() { # run_layer <label> <script> [extra args...]
   local label="$1"; shift
   local script="$1"; shift
+  local dry=(); is_dry_run && dry=(--dry-run)
   log "=== layer: ${label} ==="
-  if bash "${script}" --i-say-so "--note=${NOTE}" "${SNAP_ARG}" "$@"; then
-    echo "${label}: OK" >> "${SNAPSHOT}/freeze_status.txt"
+  if bash "${script}" --i-say-so "--note=${NOTE}" "${SNAP_ARG}" "${dry[@]}" "$@"; then
+    record_status "${label}: OK"
   else
     warn "layer ${label} failed; continuing"
-    echo "${label}: FAILED" >> "${SNAPSHOT}/freeze_status.txt"
+    record_status "${label}: FAILED"
   fi
 }
-
-: > "${SNAPSHOT}/freeze_status.txt"
 
 # A1 — offline bundle (python + system + source).
 [ "${DO_PYTHON}" -eq 1 ] && run_layer "A1-python" "${HERE}/freeze_python.sh"
@@ -57,6 +65,13 @@ run_layer() { # run_layer <label> <script> [extra args...]
 [ "${DO_IMAGE}" -eq 1 ] && run_layer "A3-image" "${HERE}/freeze_image.sh" "${PASSTHRU[@]}"
 
 # Top-level provenance.
+if is_dry_run; then
+  log "=== DRY RUN complete: previewed all selected layers ==="
+  printf '%s\n' "${STATUS_LINES[@]}"
+  dry_note "write PROVENANCE.json and top-level MANIFEST.sha256"
+  log "no snapshot content written (dry run). Target would be: ${SNAPSHOT}"
+  exit 0
+fi
 cat > "${SNAPSHOT}/PROVENANCE.json" <<JSON
 {
   "snapshot": "$(basename "${SNAPSHOT}")",
@@ -73,6 +88,6 @@ JSON
 write_sha256_manifest "${SNAPSHOT}"
 
 log "=== freeze complete ==="
-cat "${SNAPSHOT}/freeze_status.txt"
+printf '%s\n' "${STATUS_LINES[@]}"
 log "snapshot at: ${SNAPSHOT}"
 echo "${SNAPSHOT}"

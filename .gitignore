@@ -2,6 +2,13 @@
 /vendor/
 /artifacts/
 
+# Kiro session transcripts / private session data (not project content)
+/.kiro/[0-9]*
+/.kiro/**/*.transcript
+
+# Unrelated nested project with its own git history (do not vacuum into this repo)
+/src/icd-document-editor/
+
 # Build output
 build/
 */build/
