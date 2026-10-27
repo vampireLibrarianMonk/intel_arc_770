@@ -1,0 +1,12 @@
+# PyTorch / XPU harness dependencies (pin exactly before running on hardware).
+# PyTorch 2.5+ ships native Intel XPU support. Resolve the exact build that matches
+# the installed oneAPI / Level Zero stack during Phase 0, then pin here.
+#
+# Example (DO NOT assume versions are correct for your host — verify against the
+# Intel XPU install guide and your oneAPI version before use):
+#
+#   torch==2.5.1          # or the XPU-enabled build matching your oneAPI runtime
+#   pytest==8.3.3
+#
+# Left unpinned intentionally until the on-hardware stack is known.
+pytest

@@ -1,0 +1,26 @@
+# Upstream clones and bulky outputs are not tracked
+/vendor/
+/artifacts/
+
+# Build output
+build/
+*/build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Keep placeholder dirs that are otherwise empty
+!**/.gitkeep

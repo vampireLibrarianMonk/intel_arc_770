@@ -1,0 +1,9 @@
+# Keep the frozen container image small and reproducible.
+vendor/
+artifacts/
+reports/
+**/.git
+**/__pycache__
+**/.pytest_cache
+*.bundle
+*.tar

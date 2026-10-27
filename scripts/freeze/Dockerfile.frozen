@@ -1,0 +1,43 @@
+# Dockerfile.frozen — reproducible user-space image for arc-a770-lab.
+#
+# This is a TEMPLATE. Pin the base image by DIGEST (not a floating tag) and pin every
+# apt/pip version before you build a real freeze, so the image is reproducible offline.
+# The image intentionally does NOT contain a kernel/i915 driver: the HOST provides the
+# kernel and /dev/dri must be passed into the container at run time.
+#
+# Replace <DIGEST> and version pins during the freeze (Phase 0 / good-run time).
+
+# Example base (PIN BY DIGEST before freezing):
+#   FROM ubuntu:24.04@sha256:<DIGEST>
+FROM ubuntu:24.04
+
+LABEL org.arc-a770-lab.purpose="frozen user-space compute stack"
+
+# System GPU user-space stack. PIN exact versions (=x.y.z) before a real freeze.
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      ca-certificates \
+      clinfo \
+      intel-opencl-icd \
+      libze1 \
+      python3 \
+      python3-venv \
+      python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/arc-a770-lab
+
+# Copy the harness source (vendor/ and artifacts/ are git-ignored and excluded by .dockerignore).
+COPY tests ./tests
+COPY scripts ./scripts
+COPY docs ./docs
+COPY AGENTS.md README.md ./
+
+# Python deps: PIN in tests/pytorch/requirements.txt before freezing.
+RUN python3 -m venv /opt/venv \
+    && . /opt/venv/bin/activate \
+    && pip install --no-cache-dir -r tests/pytorch/requirements.txt || true
+
+ENV PATH="/opt/venv/bin:${PATH}"
+
+# Default to a shell; GPU work requires: --device /dev/dri at run time.
+CMD ["bash"]
