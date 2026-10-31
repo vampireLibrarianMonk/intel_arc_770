@@ -1,0 +1,30 @@
+# Tooling config for arc-a770-lab (lint, format, security scan, tests).
+# Not a package — this repo is scripts + C++ harnesses, not an installable module.
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = [".venv-xpu", "build", "vendor", "artifacts"]
+
+[tool.ruff.lint]
+# E/F: pyflakes+pycodestyle, I: import order, B: bugbear, UP: pyupgrade, SIM: simplify
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = [
+    "E501",   # line length handled by formatter; probes have long informational strings
+    "E741",   # ambiguous names (i, l) are fine in short numeric probe loops
+    "SIM112", # NEOReadDebugKeys / AllowUnrestrictedSize are Intel's exact mixed-case env names
+    "SIM115", # json.dump(out, open(path)) is fine in short one-shot probe scripts
+]
+
+[tool.bandit]
+# GPU probe scripts, not a web app. Exclude tests and the venv.
+exclude_dirs = [".venv-xpu", "build", "vendor", "artifacts", "tests"]
+# B404/B603/B607: these scripts intentionally call subprocess/CLI tools for GPU bring-up.
+# B101: asserts are fine in probes. B110: try/except/pass is deliberate best-effort VRAM cleanup.
+skips = ["B404", "B603", "B607", "B101", "B110"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "-ra -q"
+# Hardware tests skip cleanly when no XPU is present (see tests/pytorch/conftest.py).

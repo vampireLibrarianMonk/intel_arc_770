@@ -1,0 +1,56 @@
+# Pre-commit hooks for arc-a770-lab.
+# Install once:  .venv-xpu/bin/pre-commit install
+# Run on all:    .venv-xpu/bin/pre-commit run --all-files
+#
+# Hooks fetch their own pinned tool environments; no system packages needed.
+# Scope: lint Python + shell, format Python, scan for security issues and secrets,
+# and basic file hygiene. The .venv-xpu/, build/, and artifacts/ trees are excluded.
+
+exclude: '^(\.venv-xpu/|.*/build/|artifacts/|vendor/)'
+
+repos:
+  # --- general hygiene ---
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1024']   # block accidental >1 MB blobs (artifacts belong in artifacts/)
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # --- Python lint + format ---
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.9
+    hooks:
+      - id: ruff
+        args: ['--fix']
+      - id: ruff-format
+
+  # --- Python security scan ---
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.3
+    hooks:
+      - id: bandit
+        args: ['-c', 'pyproject.toml']
+        additional_dependencies: ['bandit[toml]']
+
+  # --- secret / credential scan ---
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+
+  # --- shell lint (25 scripts drive privileged ops; lint them) ---
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        # -x: follow sourced files. Gate on error severity; info/warning style
+        # notes (SC2012 ls-vs-find, SC2015 A&&B||C, SC1091 dynamic source) don't block.
+        args: ['-x', '--severity=error', '-e', 'SC1091']

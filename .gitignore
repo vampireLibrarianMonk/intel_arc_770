@@ -21,7 +21,10 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+.venv-xpu/
 *.egg-info/
+.pytest_cache/
+.ruff_cache/
 
 # Editor / OS
 .idea/
