@@ -14,6 +14,9 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VENV="$REPO_ROOT/.venv-llm"
 REGION="${IPEX_REGION:-us}"   # set IPEX_REGION=cn for the China mirror
+# torch 2.6 (xpu-2-6 extra) needs Python 3.11+. Prefer 3.11 if present; else fall back to
+# python3 (3.10 path uses the [xpu]/torch-2.1 extra, selected automatically below).
+PYBIN="$(command -v python3.11 || command -v python3)"
 
 echo "== IPEX-LLM install =="
 echo "   repo:   $REPO_ROOT"
@@ -22,10 +25,10 @@ echo "   region: $REGION"
 echo
 
 if [ ! -d "$VENV" ]; then
-  echo "[1/3] create venv"
-  python3 -m venv "$VENV"
+  echo "[1/3] create venv with $PYBIN ($($PYBIN --version 2>&1))"
+  "$PYBIN" -m venv "$VENV"
 else
-  echo "[1/3] venv exists, reusing"
+  echo "[1/3] venv exists, reusing ($("$VENV/bin/python" --version 2>&1))"
 fi
 # shellcheck disable=SC1091
 source "$VENV/bin/activate"
@@ -44,12 +47,18 @@ IPEX_VERSION="${IPEX_VERSION:-2.3.0b20251110}"
 #     torch 2.1.0a0+cxx11.abi + IPEX 2.1.10+xpu, both present for py3.10. Works on A770.
 #   - Python 3.11+: you can use IPEX_EXTRA=xpu-2-6 for torch 2.6 (set a 3.11 venv first).
 PYVER="$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
-IPEX_EXTRA="${IPEX_EXTRA:-xpu}"
-echo "    python $PYVER → ipex-llm[${IPEX_EXTRA}]==${IPEX_VERSION}"
+# Default extra by Python: 3.11+ gets xpu-2-6 (torch 2.6.0+xpu); 3.10 gets xpu (torch 2.1).
+if [ -z "${IPEX_EXTRA:-}" ]; then
+  case "$PYVER" in
+    3.10) IPEX_EXTRA="xpu" ;;
+    *)    IPEX_EXTRA="xpu-2-6" ;;
+  esac
+fi
 if [ "$PYVER" = "3.10" ] && [ "$IPEX_EXTRA" = "xpu-2-6" ]; then
   echo "    NOTE: xpu-2-6 needs torch 2.6 (py3.11+). On 3.10 falling back to [xpu]." >&2
   IPEX_EXTRA="xpu"
 fi
+echo "    python $PYVER → ipex-llm[${IPEX_EXTRA}]==${IPEX_VERSION}"
 pip install "ipex-llm[${IPEX_EXTRA}]==${IPEX_VERSION}" --extra-index-url "$IDX"
 # Guard: a bare ipex-llm (no torch) means the extra was ignored for this version.
 if ! python -c "import torch" 2>/dev/null; then
