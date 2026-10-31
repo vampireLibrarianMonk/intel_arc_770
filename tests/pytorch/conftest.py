@@ -3,6 +3,7 @@
 Keeps the suite CI-green on the current (no-A770) host while remaining ready to run
 end-to-end once the hardware and an XPU-enabled PyTorch build are present.
 """
+
 from __future__ import annotations
 
 import pytest

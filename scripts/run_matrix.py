@@ -12,6 +12,7 @@ Planned responsibilities (Phase 2+):
 Intentionally does not run anything yet: no A770 is attached. Implement per
 .kiro/specs/addressing-performance-study/ when on hardware.
 """
+
 from __future__ import annotations
 
 import argparse

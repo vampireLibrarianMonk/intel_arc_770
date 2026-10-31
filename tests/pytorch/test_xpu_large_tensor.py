@@ -3,6 +3,7 @@
 The oracle (expected_value / sentinel_indices) is pure-Python and is always tested.
 The device test is skipped cleanly when no XPU is present.
 """
+
 from __future__ import annotations
 
 import conftest

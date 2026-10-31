@@ -9,6 +9,7 @@ scaffolding host is expected). It does NOT change any setting or run a workload.
 Emits a JSON report to stdout (and optionally a file) mirroring the environment.json
 style so it can be archived next to baseline captures.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -68,19 +69,20 @@ def collect() -> dict:
     report["device_count"] = count
     for i in range(count):
         props = _safe(lambda i=i: torch.xpu.get_device_properties(i))
-        report["devices"].append({
-            "index": i,
-            "name": _safe(lambda p=props: getattr(p, "name", None)),
-            "total_memory_bytes": _safe(lambda p=props: getattr(p, "total_memory", None)),
-            "max_compute_units": _safe(lambda p=props: getattr(p, "max_compute_units", None)),
-            "properties_repr": str(props),
-        })
+        report["devices"].append(
+            {
+                "index": i,
+                "name": _safe(lambda p=props: getattr(p, "name", None)),
+                "total_memory_bytes": _safe(lambda p=props: getattr(p, "total_memory", None)),
+                "max_compute_units": _safe(lambda p=props: getattr(p, "max_compute_units", None)),
+                "properties_repr": str(props),
+            }
+        )
 
     # Performance-relevant runtime knobs (reported, never changed here).
     report["perf_knobs"] = {
         "tf32_allowed": _safe(lambda: getattr(torch.backends, "mkldnn", None) is not None),
-        "autocast_xpu_supported": _safe(
-            lambda: hasattr(torch, "autocast")),
+        "autocast_xpu_supported": _safe(lambda: hasattr(torch, "autocast")),
         "num_threads": _safe(lambda: torch.get_num_threads()),
     }
 

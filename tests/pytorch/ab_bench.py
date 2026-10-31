@@ -11,6 +11,7 @@ Runs only when torch.xpu is available; otherwise it SKIPS cleanly (returns a rep
 with skipped=True) so it stays CI-green on a host with no Arc GPU. It never fabricates
 timings and never mutates global perf settings implicitly.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,8 +20,8 @@ import random
 import statistics
 import sys
 import time
-from dataclasses import dataclass, field, asdict
-from typing import Callable
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
 
 try:
     import torch
@@ -35,10 +36,11 @@ def xpu_available() -> bool:
 @dataclass
 class Variant:
     """One side of an A/B comparison."""
+
     name: str
-    setup: Callable[[], object]              # build inputs on device; returns state
-    run: Callable[[object], object]          # execute the op; returns device result
-    reference: Callable[[], object] | None   # CPU oracle output (optional)
+    setup: Callable[[], object]  # build inputs on device; returns state
+    run: Callable[[object], object]  # execute the op; returns device result
+    reference: Callable[[], object] | None  # CPU oracle output (optional)
 
 
 @dataclass
@@ -72,8 +74,14 @@ def _percentile(sorted_vals: list[float], pct: float) -> float:
     return sorted_vals[k]
 
 
-def run_ab(variant_a: Variant, variant_b: Variant, reps: int = 20, warmup: int = 5,
-           seed: int = 123456, tol: float = 1e-3) -> dict:
+def run_ab(
+    variant_a: Variant,
+    variant_b: Variant,
+    reps: int = 20,
+    warmup: int = 5,
+    seed: int = 123456,
+    tol: float = 1e-3,
+) -> dict:
     report: dict = {"skipped": False, "reps": reps, "warmup": warmup, "seed": seed}
 
     if not xpu_available():
@@ -126,6 +134,7 @@ def run_ab(variant_a: Variant, variant_b: Variant, reps: int = 20, warmup: int =
 
 # --- Example variant builder (elementwise saxpy), used by tests / as a template ------
 
+
 def _saxpy_variants(n: int, dtype_a: str, dtype_b: str, seed: int):
     assert torch is not None
     dev = "xpu:0"
@@ -145,7 +154,7 @@ def _saxpy_variants(n: int, dtype_a: str, dtype_b: str, seed: int):
             return a * x + y
 
         def reference():
-            return (a * x_cpu + y_cpu)
+            return a * x_cpu + y_cpu
 
         return Variant(name=f"saxpy_{dtype_name}", setup=setup, run=run, reference=reference)
 
@@ -162,8 +171,11 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     if not xpu_available():
-        print(json.dumps({"skipped": True,
-                          "reason": "torch.xpu not available; nothing measured."}, indent=2))
+        print(
+            json.dumps(
+                {"skipped": True, "reason": "torch.xpu not available; nothing measured."}, indent=2
+            )
+        )
         return 0
 
     va, vb = _saxpy_variants(args.n, args.dtype_a, args.dtype_b, seed=123456)

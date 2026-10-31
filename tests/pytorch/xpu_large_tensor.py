@@ -9,6 +9,7 @@ never by allocation success alone.
 CPU-side reference values mirror the SplitMix64 scheme used by the C++/OpenCL oracle
 so findings can be cross-checked across harnesses.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -90,8 +91,10 @@ def run(bytes_target: int, seed: int) -> int:
         buf[i] = signed
         read_back = int(buf[i].item())
         if read_back != signed:
-            print(f"  MISMATCH at element {i} (byte {i * elem_size}): "
-                  f"wrote {signed}, read {read_back}")
+            print(
+                f"  MISMATCH at element {i} (byte {i * elem_size}): "
+                f"wrote {signed}, read {read_back}"
+            )
             failures += 1
         else:
             print(f"  OK element {i} (byte {i * elem_size})")
@@ -109,8 +112,9 @@ def run(bytes_target: int, seed: int) -> int:
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="PyTorch/XPU >4 GiB sentinel harness")
-    parser.add_argument("--bytes", type=int, default=6 * GIB,
-                        help="target tensor size in bytes (default 6 GiB)")
+    parser.add_argument(
+        "--bytes", type=int, default=6 * GIB, help="target tensor size in bytes (default 6 GiB)"
+    )
     parser.add_argument("--seed", type=int, default=123456)
     args = parser.parse_args(argv)
     return run(args.bytes, args.seed)
