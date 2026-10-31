@@ -33,21 +33,27 @@ python -m pip install --quiet --upgrade pip
 
 echo "[2/3] install ipex-llm + XPU torch stack (large download)"
 IDX="https://pytorch-extension.intel.com/release-whl/stable/xpu/${REGION}/"
-# IMPORTANT: the extra name uses HYPHENS (xpu-2-6), not xpu_2.6. A wrong/unknown extra is
-# silently ignored by pip, leaving a bare ipex-llm with NO torch/IPEX. Verify torch after.
-if ! pip install --pre --upgrade "ipex-llm[xpu-2-6]" --extra-index-url "$IDX"; then
-  echo "    xpu-2-6 extra failed; falling back to ipex-llm[xpu] (PyTorch 2.1 line)"
-  pip install --pre --upgrade "ipex-llm[xpu]" --extra-index-url "$IDX"
-fi
-# Guard: a bare ipex-llm (no torch) means the extra was ignored. Fail loudly instead of later.
+# Extra name must be one the installed wheel actually provides; an unknown extra is
+# SILENTLY IGNORED by pip, leaving a bare ipex-llm with NO torch/IPEX.
+# For the Arc A770 (DG2) the Arc-specific extra is 'xpu-arc' (torch 2.3.1+cxx11.abi,
+# IPEX 2.3.110+xpu, bigdl-core-xe-23). 'xpu' is the older 2.1 line. Try Arc first.
+installed=0
+for extra in "xpu-arc" "xpu"; do
+  echo "    trying ipex-llm[$extra]"
+  if pip install --pre --upgrade "ipex-llm[$extra]" --extra-index-url "$IDX"; then
+    installed=1; break
+  fi
+done
+[ "$installed" = 1 ] || { echo "ERROR: no ipex-llm xpu extra installed" >&2; exit 1; }
+# Guard: a bare ipex-llm (no torch) means the extra was ignored. Fail loudly, not at runtime.
 if ! python -c "import torch" 2>/dev/null; then
   echo "ERROR: torch did not install — the ipex-llm extra was not recognized by pip." >&2
-  echo "       Try:  pip install --pre --upgrade 'ipex-llm[xpu]' --extra-index-url $IDX" >&2
+  echo "       Check available extras, then install the right one, e.g. 'ipex-llm[xpu-arc]'." >&2
   exit 1
 fi
-# Harness extras. transformers is NOT always pulled by the ipex-llm extra, and IPEX-LLM's
-# 4-bit loader is pinned to the 4.36-4.38 line (newer breaks from_pretrained). Pin 4.37.0.
-pip install --quiet "transformers==4.37.0" sentencepiece "huggingface_hub>=0.23"
+# The xpu-arc extra already pins transformers==4.37.0 + tokenizers==0.15.2 + sentencepiece.
+# Only add the model-download helper; do NOT re-pin transformers (would fight the extra).
+pip install --quiet "huggingface_hub>=0.23"
 
 echo "[3/3] verify import"
 python - <<'PY'
