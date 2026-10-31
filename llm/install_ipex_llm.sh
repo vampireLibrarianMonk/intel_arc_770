@@ -38,8 +38,9 @@ if ! pip install --pre --upgrade "ipex-llm[xpu_2.6]" --extra-index-url "$IDX"; t
   echo "    xpu_2.6 tag failed; falling back to ipex-llm[xpu] (PyTorch 2.1)"
   pip install --pre --upgrade "ipex-llm[xpu]" --extra-index-url "$IDX"
 fi
-# Harness extras (model download + prompts). transformers comes in via ipex-llm.
-pip install --quiet "huggingface_hub>=0.23" || true
+# Harness extras. transformers is NOT always pulled by the ipex-llm extra, and IPEX-LLM's
+# 4-bit loader is pinned to the 4.36-4.38 line (newer breaks from_pretrained). Pin 4.37.0.
+pip install --quiet "transformers==4.37.0" sentencepiece "huggingface_hub>=0.23"
 
 echo "[3/3] verify import"
 python - <<'PY'
