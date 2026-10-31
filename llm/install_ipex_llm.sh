@@ -36,6 +36,10 @@ python -m pip install --quiet --upgrade pip
 
 echo "[2/3] install ipex-llm + XPU torch stack (large download)"
 IDX="https://pytorch-extension.intel.com/release-whl/stable/xpu/${REGION}/"
+# torch==2.6.0+xpu (what xpu-2-6 pins) lives on PyTorch's own xpu index, NOT the Intel
+# pytorch-extension index (which only has +cxx11.abi builds). ipex-llm needs BOTH visible:
+# its own package from the Intel index, torch from the PyTorch index.
+TORCH_IDX="https://download.pytorch.org/whl/xpu"
 # LESSON LEARNED: which [xpu*] extras exist DIFFERS BY ipex-llm version, and an unknown
 # extra is SILENTLY IGNORED by pip (bare install, no torch). `--pre --upgrade` also lets
 # pip hop to a version whose extras differ. So: PIN an exact version known to provide the
@@ -59,7 +63,13 @@ if [ "$PYVER" = "3.10" ] && [ "$IPEX_EXTRA" = "xpu-2-6" ]; then
   IPEX_EXTRA="xpu"
 fi
 echo "    python $PYVER → ipex-llm[${IPEX_EXTRA}]==${IPEX_VERSION}"
-pip install "ipex-llm[${IPEX_EXTRA}]==${IPEX_VERSION}" --extra-index-url "$IDX"
+# xpu-2-6 needs the PyTorch xpu index for torch==2.6.0+xpu; the older xpu extra does not.
+if [ "$IPEX_EXTRA" = "xpu-2-6" ]; then
+  pip install "ipex-llm[${IPEX_EXTRA}]==${IPEX_VERSION}" \
+    --extra-index-url "$IDX" --extra-index-url "$TORCH_IDX"
+else
+  pip install "ipex-llm[${IPEX_EXTRA}]==${IPEX_VERSION}" --extra-index-url "$IDX"
+fi
 # Guard: a bare ipex-llm (no torch) means the extra was ignored for this version.
 if ! python -c "import torch" 2>/dev/null; then
   echo "ERROR: torch did not install — version ${IPEX_VERSION} may not provide xpu-2-6." >&2
