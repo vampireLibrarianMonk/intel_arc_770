@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.20)
+project(arc_a770_benchmarks CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+add_compile_options(-Wall -Wextra -O2)
+
+find_package(OpenCL QUIET)
+if(OpenCL_FOUND)
+  add_executable(addr_bench addr_bench.cpp)
+  target_link_libraries(addr_bench PRIVATE OpenCL::OpenCL)
+  message(STATUS "OpenCL found: building addr_bench.")
+else()
+  message(FATAL_ERROR "OpenCL not found. Install opencl-headers + ocl-icd-opencl-dev.")
+endif()
