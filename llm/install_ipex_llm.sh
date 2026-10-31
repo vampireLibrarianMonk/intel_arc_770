@@ -33,22 +33,18 @@ python -m pip install --quiet --upgrade pip
 
 echo "[2/3] install ipex-llm + XPU torch stack (large download)"
 IDX="https://pytorch-extension.intel.com/release-whl/stable/xpu/${REGION}/"
-# Extra name must be one the installed wheel actually provides; an unknown extra is
-# SILENTLY IGNORED by pip, leaving a bare ipex-llm with NO torch/IPEX.
-# For the Arc A770 (DG2) the Arc-specific extra is 'xpu-arc' (torch 2.3.1+cxx11.abi,
-# IPEX 2.3.110+xpu, bigdl-core-xe-23). 'xpu' is the older 2.1 line. Try Arc first.
-installed=0
-for extra in "xpu-arc" "xpu"; do
-  echo "    trying ipex-llm[$extra]"
-  if pip install --pre --upgrade "ipex-llm[$extra]" --extra-index-url "$IDX"; then
-    installed=1; break
-  fi
-done
-[ "$installed" = 1 ] || { echo "ERROR: no ipex-llm xpu extra installed" >&2; exit 1; }
-# Guard: a bare ipex-llm (no torch) means the extra was ignored. Fail loudly, not at runtime.
+# LESSON LEARNED: which [xpu*] extras exist DIFFERS BY ipex-llm version, and an unknown
+# extra is SILENTLY IGNORED by pip (bare install, no torch). `--pre --upgrade` also lets
+# pip hop to a version whose extras differ. So: PIN an exact version known to provide the
+# 'xpu-2-6' extra (pulls torch 2.6.0+xpu, matching our NEO 24.39), and do NOT use --upgrade.
+IPEX_VERSION="${IPEX_VERSION:-2.3.0b20251110}"
+echo "    pinning ipex-llm[xpu-2-6]==${IPEX_VERSION}"
+pip install "ipex-llm[xpu-2-6]==${IPEX_VERSION}" --extra-index-url "$IDX"
+# Guard: a bare ipex-llm (no torch) means the extra was ignored for this version.
 if ! python -c "import torch" 2>/dev/null; then
-  echo "ERROR: torch did not install — the ipex-llm extra was not recognized by pip." >&2
-  echo "       Check available extras, then install the right one, e.g. 'ipex-llm[xpu-arc]'." >&2
+  echo "ERROR: torch did not install — version ${IPEX_VERSION} may not provide xpu-2-6." >&2
+  echo "       List extras:  python -c \"import importlib.metadata as m; print(m.metadata('ipex-llm').get_all('Provides-Extra'))\"" >&2
+  echo "       Then re-run with IPEX_VERSION=<ver that has xpu-2-6>." >&2
   exit 1
 fi
 # The xpu-arc extra already pins transformers==4.37.0 + tokenizers==0.15.2 + sentencepiece.
