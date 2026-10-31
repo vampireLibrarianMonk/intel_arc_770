@@ -31,12 +31,19 @@ fi
 source "$VENV/bin/activate"
 python -m pip install --quiet --upgrade pip
 
-echo "[2/3] install ipex-llm[xpu_2.6] (bundles the XPU runtime; large download)"
+echo "[2/3] install ipex-llm + XPU torch stack (large download)"
 IDX="https://pytorch-extension.intel.com/release-whl/stable/xpu/${REGION}/"
-# Try the PyTorch 2.6 variant first (matches our NEO 24.39); fall back to the default tag.
-if ! pip install --pre --upgrade "ipex-llm[xpu_2.6]" --extra-index-url "$IDX"; then
-  echo "    xpu_2.6 tag failed; falling back to ipex-llm[xpu] (PyTorch 2.1)"
+# IMPORTANT: the extra name uses HYPHENS (xpu-2-6), not xpu_2.6. A wrong/unknown extra is
+# silently ignored by pip, leaving a bare ipex-llm with NO torch/IPEX. Verify torch after.
+if ! pip install --pre --upgrade "ipex-llm[xpu-2-6]" --extra-index-url "$IDX"; then
+  echo "    xpu-2-6 extra failed; falling back to ipex-llm[xpu] (PyTorch 2.1 line)"
   pip install --pre --upgrade "ipex-llm[xpu]" --extra-index-url "$IDX"
+fi
+# Guard: a bare ipex-llm (no torch) means the extra was ignored. Fail loudly instead of later.
+if ! python -c "import torch" 2>/dev/null; then
+  echo "ERROR: torch did not install — the ipex-llm extra was not recognized by pip." >&2
+  echo "       Try:  pip install --pre --upgrade 'ipex-llm[xpu]' --extra-index-url $IDX" >&2
+  exit 1
 fi
 # Harness extras. transformers is NOT always pulled by the ipex-llm extra, and IPEX-LLM's
 # 4-bit loader is pinned to the 4.36-4.38 line (newer breaks from_pretrained). Pin 4.37.0.
