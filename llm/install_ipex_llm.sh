@@ -38,8 +38,19 @@ IDX="https://pytorch-extension.intel.com/release-whl/stable/xpu/${REGION}/"
 # pip hop to a version whose extras differ. So: PIN an exact version known to provide the
 # 'xpu-2-6' extra (pulls torch 2.6.0+xpu, matching our NEO 24.39), and do NOT use --upgrade.
 IPEX_VERSION="${IPEX_VERSION:-2.3.0b20251110}"
-echo "    pinning ipex-llm[xpu-2-6]==${IPEX_VERSION}"
-pip install "ipex-llm[xpu-2-6]==${IPEX_VERSION}" --extra-index-url "$IDX"
+# Extra choice depends on the venv's Python:
+#   - Python 3.10 (this host): the 'xpu-2-6' extra wants torch==2.6.0+xpu, which is NOT on
+#     this Intel index (only +cxx11.abi builds, newest 2.5.1). Use the 'xpu' extra →
+#     torch 2.1.0a0+cxx11.abi + IPEX 2.1.10+xpu, both present for py3.10. Works on A770.
+#   - Python 3.11+: you can use IPEX_EXTRA=xpu-2-6 for torch 2.6 (set a 3.11 venv first).
+PYVER="$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
+IPEX_EXTRA="${IPEX_EXTRA:-xpu}"
+echo "    python $PYVER → ipex-llm[${IPEX_EXTRA}]==${IPEX_VERSION}"
+if [ "$PYVER" = "3.10" ] && [ "$IPEX_EXTRA" = "xpu-2-6" ]; then
+  echo "    NOTE: xpu-2-6 needs torch 2.6 (py3.11+). On 3.10 falling back to [xpu]." >&2
+  IPEX_EXTRA="xpu"
+fi
+pip install "ipex-llm[${IPEX_EXTRA}]==${IPEX_VERSION}" --extra-index-url "$IDX"
 # Guard: a bare ipex-llm (no torch) means the extra was ignored for this version.
 if ! python -c "import torch" 2>/dev/null; then
   echo "ERROR: torch did not install — version ${IPEX_VERSION} may not provide xpu-2-6." >&2
