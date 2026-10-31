@@ -1,10 +1,10 @@
 # Intel Arc A770 16 GB — Agentic Driver Diagnostics & Optimization Lab
 
-**Status:** Project strategy / Kiro ingestion brief  
-**Prepared:** 2026-10-27  
-**Target GPU:** Intel Arc A770, 16 GiB VRAM (Alchemist / Xe-HPG, PCI ID commonly `8086:56a0`)  
-**Target OS:** Ubuntu Linux, preferably an isolated Ubuntu 24.04+ test installation  
-**Primary engineering domains:** OpenCL, oneAPI Level Zero, Intel Compute Runtime (NEO), Intel Graphics Compiler (IGC), GPU memory management  
+**Status:** Project strategy / Kiro ingestion brief
+**Prepared:** 2026-10-27
+**Target GPU:** Intel Arc A770, 16 GiB VRAM (Alchemist / Xe-HPG, PCI ID commonly `8086:56a0`)
+**Target OS:** Ubuntu Linux, preferably an isolated Ubuntu 24.04+ test installation
+**Primary engineering domains:** OpenCL, oneAPI Level Zero, Intel Compute Runtime (NEO), Intel Graphics Compiler (IGC), GPU memory management
 **Project shorthand:** `arc-a770-lab`
 
 > **Project charter:** Build a reproducible, agent-assisted laboratory to diagnose Intel Arc A770 compute-driver limitations; identify differences among hardware limits, API defaults, application behavior, compiler code generation, and fixable runtime defects; design, implement, benchmark, and validate narrowly scoped changes. Focus first on the historical 4 GiB **per-allocation** behavior, not on a supposed 4 GiB total-VRAM limit.
@@ -24,7 +24,7 @@ Start with **Intel Compute Runtime + a standalone C++ OpenCL/Level Zero diagnost
 
 **Starting hypothesis:** Meaningful improvement is most likely in **selection of memory strategies, compiler-generated addressing, workload-specific buffer layout, diagnostic transparency, and error handling**. Removing a hardware addressing-mode limitation through software alone is not an achievable objective.
 
-**Original investigation:** <https://github.com/intel/compute-runtime/issues/627>  
+**Original investigation:** <https://github.com/intel/compute-runtime/issues/627>
 **Authoritative Intel programming guide:** <https://github.com/intel/compute-runtime/blob/master/programmers-guide/ALLOCATIONS_GREATER_THAN_4GB.md>
 
 ---

@@ -50,28 +50,43 @@ bootloader, and driver-package changes are human-approval-required and never aut
 ## Quick start
 
 ```bash
-# Read-only system + framework readiness checks (safe on any host):
-scripts/check_prereqs.sh
-scripts/check_pytorch_xpu.py
+# Use the full 16 GiB in PyTorch (set BOTH env vars, then run your job):
+source scripts/xpu_env.sh
+python your_training_script.py
+#   or wrap a command:  scripts/xpu_env.sh python your_training_script.py
 
-# Capture a read-only environment baseline:
-scripts/capture_baseline.sh
+# Reproduce the memory findings on hardware:
+cd tests/opencl   && cmake -S . -B build && cmake --build build && ./build/large_buffer --kernel kernels/sentinel.cl
+cd tests/level-zero && cmake -S . -B build && cmake --build build && ./build/l0_large_buffer
+cd benchmarks     && cmake -S . -B build && cmake --build build && ./build/addr_bench --size-gib 3.5
+
+# Read-only readiness checks (safe on any host):
+scripts/check_prereqs.sh && scripts/check_pytorch_xpu.py
 
 # Offline CPU-oracle unit check (no GPU required):
 g++ -std=c++17 tests/opencl/oracle_selfcheck.cpp -o /tmp/oracle && /tmp/oracle
-
-# PyTorch harness offline tests (XPU tests skip cleanly without hardware):
-cd tests/pytorch && python3 -m pytest -q
 ```
 
 ## Current status
 
-**Scaffolding stage.** No A770 hardware is attached to the development host, so this repo
-currently contains hardware-independent work only: structure, steering, specs, harness
-source that compiles/passes offline, CPU oracles, read-only scripts, the freeze toolkit, and
-templates. On-hardware tasks (allocation/boundary tests, benchmarks, driver-load
-verification) are explicitly gated until an A770 is attached. Nothing here installs drivers,
-touches firmware, or modifies the kernel.
+**On-hardware, bring-up complete, full 16 GiB unlocked.** The A770 is attached and the whole
+compute stack is up: kernel 6.8 i915 bound, render node, OpenCL + Level Zero, GuC/HuC, and
+PyTorch `2.6.0+xpu` running real compute. The project's core questions are answered on real
+hardware (see [`reports/FINDINGS_memory_4gib.md`](reports/FINDINGS_memory_4gib.md)):
+
+- **The 4 GiB cap is a policy, not OOM** — confirmed on OpenCL (`CL_INVALID_BUFFER_SIZE`) and
+  Level Zero (`ZE_RESULT_ERROR_UNSUPPORTED_SIZE`), with 15 GiB free.
+- **The documented >4 GiB fix works and needs BOTH halves** — relaxed allocation **and** the
+  stateless compile flag. Either alone fails (reject, or silent corruption past 4 GiB).
+- **No stateless speed penalty** — within 1% of the default path at matched size (refutes the
+  project's original H2 hypothesis for this card + NEO 24.39).
+- **Full card usable in PyTorch** — with `NEOReadDebugKeys=1 AllowUnrestrictedSize=1`: a single
+  **15.03 GiB** tensor, a 4.17 GiB matmul operand, and **14.34 GiB peak** during a real
+  training loop, all verified correct.
+
+See [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) to use the full card yourself, and
+[`CHANGELOG.md`](CHANGELOG.md) for the bring-up history. Nothing here installs drivers, touches
+firmware, or modifies the kernel automatically — those steps are operator-run (see `AGENTS.md`).
 
 ## Layout
 
