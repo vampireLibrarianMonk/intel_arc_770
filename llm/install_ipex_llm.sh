@@ -44,7 +44,14 @@ TORCH_IDX="https://download.pytorch.org/whl/xpu"
 # extra is SILENTLY IGNORED by pip (bare install, no torch). `--pre --upgrade` also lets
 # pip hop to a version whose extras differ. So: PIN an exact version known to provide the
 # 'xpu-2-6' extra (pulls torch 2.6.0+xpu, matching our NEO 24.39), and do NOT use --upgrade.
-IPEX_VERSION="${IPEX_VERSION:-2.3.0b20251110}"
+# NOTE: ipex-llm's xpu-2-6 extra pins bigdl-core-xe-all to the SAME datestamp as the
+# ipex-llm build. Some ipex-llm datestamps (e.g. 2.3.0b20251110) have NO matching
+# bigdl-core-xe-all wheel, so the install fails with "No matching distribution found for
+# bigdl-core-xe-all==<date>". Pin a datestamp that has a matching bigdl-core-xe-all build;
+# 2.3.0b20251026 is the newest pair that resolves as of this writing. If you bump this,
+# confirm bigdl-core-xe-all==<same date> exists first:
+#   pip index versions bigdl-core-xe-all --pre --extra-index-url "$IDX"
+IPEX_VERSION="${IPEX_VERSION:-2.3.0b20251026}"
 # Extra choice depends on the venv's Python:
 #   - Python 3.10 (this host): the 'xpu-2-6' extra wants torch==2.6.0+xpu, which is NOT on
 #     this Intel index (only +cxx11.abi builds, newest 2.5.1). Use the 'xpu' extra →

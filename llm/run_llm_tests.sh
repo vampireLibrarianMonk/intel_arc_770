@@ -33,4 +33,4 @@ echo "== running LLM tests =="
 echo "   model args: ${ARGS[*]}"
 echo "   (first run per model downloads weights + compiles kernels; be patient)"
 echo
-exec python "$REPO_ROOT/llm/llm_bench.py" "${ARGS[@]}"
+exec python -u "$REPO_ROOT/llm/llm_bench.py" "${ARGS[@]}"
