@@ -4,6 +4,37 @@ All notable changes to arc-a770-lab. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added — LLM harness alpha cycle
+- `llm/harness-alpha/`: a reproducible four-candidate comparison of local inference harnesses
+  (llama.cpp Vulkan, llama.cpp SYCL, LM Studio, IPEX-LLM) for coding + creative-writing
+  assistance on the A770. Shared Qwen2.5-7B model, fixed scored task set (coding executed
+  against hidden tests; writing checked for measurable properties + saved verbatim), shared
+  OpenAI-compatible driver. Downloads/runs are durable systemd user units with a compact
+  `status.sh`.
+- `llm/llm_hello.py` + `llm/run_hello.sh`: minimal "is IPEX-LLM working" smoke test
+  (one Python hello-world coding task + one English writing paragraph).
+- `reports/harness_alpha_comparison.md`: results, three-claims breakdown, writing-quality
+  comparison, and recommendation (**llama.cpp Vulkan**, ~40 tok/s).
+- `reports/sycl_fix_plan.md`: root-cause analysis + fix for the llama.cpp SYCL crash.
+
+### Fixed
+- IPEX-LLM installer: pin `ipex-llm==2.3.0b20251026` (a datestamp with a matching
+  `bigdl-core-xe-all` wheel); add `LD_LIBRARY_PATH` + `HF_HUB_DISABLE_XET=1` to
+  `xpu_runtime.env` so the XPU stack loads and downloads complete reliably.
+- llama.cpp **SYCL segfault on A770** (NEO 24.39 + oneAPI 2026.2): isolated two bugs by gdb
+  backtrace — a Level-Zero Sysman memory-query SEGV and a persistent-device-code-cache SEGV.
+  Worked around with `-DGGML_SYCL_SUPPORT_LEVEL_ZERO_API=OFF -DGGML_SYCL_DNN=OFF` +
+  `SYCL_CACHE_PERSISTENT=0`. SYCL now runs correctly (4/4 coding, 4/4 writing) though slower
+  than Vulkan until oneDNN + the cache can be re-enabled.
+
+### Finding
+- GPU-use probe blind spot: the Vulkan/Mesa (ANV) driver does not expose per-process VRAM in
+  `/proc/<pid>/fdinfo` (unlike the i915 compute/Level-Zero path). Vulkan GPU use is confirmed
+  via tokens/sec vs a CPU baseline instead (`gpu_probe.sh` documents this).
+- `.gitignore`: add `.venv-llm/`.
+
 ## [0.1.0] — 2026-10-31
 
 First on-hardware release. Full A770 bring-up plus the memory-boundary study (H0/H1/H2)
