@@ -1,0 +1,63 @@
+# Dockerfile.sycl — isolated "latest software" SYCL test for the Arc A770.
+#
+# Purpose: prove whether a CURRENT Intel GPU user-space driver (NEO 26.35 + IGC 2.42) lets
+# llama.cpp SYCL run with oneDNN AND the Level-Zero API AND the persistent cache all ENABLED
+# — i.e. the full-speed config that SEGVs on the host's older NEO 24.39.
+#
+# This touches NOTHING on the host: the newer driver lives only inside the image. The
+# container shares the host kernel (i915 6.8), so this isolates the USER-SPACE driver stack,
+# not kernel behavior (per steering). /dev/dri is passed in at run time.
+#
+# Build:  sudo docker build -f Dockerfile.sycl -t arc-sycl-latest .
+# Run:    sudo docker run --rm --device /dev/dri:/dev/dri -v <models>:/models arc-sycl-latest
+
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates curl gnupg cmake ninja-build git libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- latest Intel GPU user-space driver (NEO) + IGC + GmmLib, pinned to exact releases ---
+# NEO 26.35 pairs with IGC v2.41.5 (per the compute-runtime release notes); do NOT use a
+# newer IGC — the NEO debs hard-depend on intel-igc-* < 2.41.5+~.
+ARG NEO=26.35.39758.10-0
+ARG IGC=2.41.5+22716
+ARG IGC_TAG=v2.41.5
+ARG GMM=22.10.0
+WORKDIR /tmp/gpu
+RUN set -eux; base_cr=https://github.com/intel/compute-runtime/releases/download; \
+    base_igc=https://github.com/intel/intel-graphics-compiler/releases/download; \
+    curl -fsSLO ${base_igc}/${IGC_TAG}/intel-igc-core-2_${IGC}_amd64.deb; \
+    curl -fsSLO ${base_igc}/${IGC_TAG}/intel-igc-opencl-2_${IGC}_amd64.deb; \
+    curl -fsSLO ${base_cr}/26.35.39758.10/intel-opencl-icd_${NEO}_amd64.deb; \
+    curl -fsSLO ${base_cr}/26.35.39758.10/libze-intel-gpu1_${NEO}_amd64.deb; \
+    curl -fsSLO ${base_cr}/26.35.39758.10/libigdgmm12_${GMM}_amd64.deb; \
+    apt-get update; apt-get install -y ./*.deb; rm -rf /tmp/gpu /var/lib/apt/lists/*
+
+# --- oneAPI 2026.2: DPC++ compiler + oneDNN + oneMKL + Level-Zero loader ---
+RUN curl -fsSL https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \
+      | gpg --dearmor -o /usr/share/keyrings/oneapi-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" \
+      > /etc/apt/sources.list.d/oneAPI.list \
+    && apt-get update && apt-get install -y --no-install-recommends \
+        intel-oneapi-compiler-dpcpp-cpp intel-oneapi-dnnl-devel intel-oneapi-mkl-devel \
+        libze1 libze-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- build llama.cpp SYCL with EVERYTHING ENABLED (the config that crashes on NEO 24.39) ---
+ARG LLAMA_REF=master
+RUN git clone --depth 1 https://github.com/ggml-org/llama.cpp /opt/llama.cpp
+WORKDIR /opt/llama.cpp
+# NOTE: setvars.sh references unbound vars (e.g. OCL_ICD_FILENAMES); source it with -u OFF.
+RUN bash -c 'set -e; set +u; source /opt/intel/oneapi/setvars.sh --force; set -u; \
+    CC=icx CXX=icpx cmake -S . -B build-sycl -G Ninja \
+      -DGGML_SYCL=ON -DGGML_SYCL_TARGET=INTEL -DGGML_SYCL_F16=ON \
+      -DGGML_SYCL_DNN=ON -DGGML_SYCL_SUPPORT_LEVEL_ZERO_API=ON \
+      -DCMAKE_BUILD_TYPE=Release -DLLAMA_CURL=OFF \
+      -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx; \
+    cmake --build build-sycl -j"$(nproc)" --target llama-cli llama-server'
+
+COPY run_in_container.sh /opt/run_in_container.sh
+RUN chmod +x /opt/run_in_container.sh
+ENTRYPOINT ["/opt/run_in_container.sh"]

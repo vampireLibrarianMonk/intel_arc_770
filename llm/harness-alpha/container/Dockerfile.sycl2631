@@ -1,0 +1,44 @@
+# Dockerfile.sycl2631 — SYCL test on NEO 26.31 (newest driver that enumerates on kernel 6.8).
+# Builds FROM the lean neo-probe:2631 image (driver already installed) and adds oneAPI +
+# llama.cpp SYCL with oneDNN AND Level-Zero API AND (at run time) the persistent cache ON —
+# the config that SEGVs on the host's NEO 24.39. Tests whether NEO 26.31 fixes it.
+#
+# Kept lean to fit limited disk: purge the oneAPI debugger + apt/doc caches in-layer.
+FROM neo-probe:2631
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        cmake ninja-build git gnupg curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# NEO 26.31 pairs with Level-Zero loader v1.32.0; Ubuntu 24.04 ships only 1.16.1 which cannot
+# load the NEO 26.31 L0 driver (sycl-ls sees no device). Install the matched 1.32.0 loader.
+RUN cd /tmp && lz=https://github.com/oneapi-src/level-zero/releases/download/v1.32.0; \
+    curl -fsSLO ${lz}/libze1_1.32.0+u24.04_amd64.deb; \
+    curl -fsSLO ${lz}/libze-dev_1.32.0+u24.04_amd64.deb; \
+    apt-get update; apt-get install -y ./libze1_1.32.0+u24.04_amd64.deb ./libze-dev_1.32.0+u24.04_amd64.deb; \
+    rm -f /tmp/*.deb; rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \
+      | gpg --dearmor -o /usr/share/keyrings/oneapi-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" \
+      > /etc/apt/sources.list.d/oneAPI.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        intel-oneapi-compiler-dpcpp-cpp intel-oneapi-dnnl-devel intel-oneapi-mkl-devel \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG LLAMA_REF=master
+RUN git clone --depth 1 https://github.com/ggml-org/llama.cpp /opt/llama.cpp
+WORKDIR /opt/llama.cpp
+RUN bash -c 'set -e; set +u; source /opt/intel/oneapi/setvars.sh --force; set -u; \
+    CC=icx CXX=icpx cmake -S . -B build-sycl -G Ninja \
+      -DGGML_SYCL=ON -DGGML_SYCL_TARGET=INTEL -DGGML_SYCL_F16=ON \
+      -DGGML_SYCL_DNN=ON -DGGML_SYCL_SUPPORT_LEVEL_ZERO_API=ON \
+      -DCMAKE_BUILD_TYPE=Release -DLLAMA_CURL=OFF \
+      -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx; \
+    cmake --build build-sycl -j"$(nproc)" --target llama-cli; \
+    rm -rf /opt/llama.cpp/build-sycl/CMakeFiles'
+
+COPY run_in_container.sh /opt/run_in_container.sh
+RUN chmod +x /opt/run_in_container.sh
+ENTRYPOINT ["/opt/run_in_container.sh"]

@@ -1,0 +1,30 @@
+# Dockerfile.neo-probe — LEAN image to test whether a given NEO version enumerates the
+# Arc A770 through the host kernel (no oneAPI, no compile; just driver + clinfo + sycl-ls bits).
+# Used to bisect the newest NEO still compatible with the host kernel before building the
+# heavy SYCL image for the winner.
+#
+# Build: sudo docker build -f Dockerfile.neo-probe \
+#          --build-arg NEO=<neo-ver> --build-arg IGC=<igc-ver> --build-arg IGC_TAG=<tag> \
+#          --build-arg GMM=<gmm-ver> --build-arg NEO_TAG=<neo-tag> -t neo-probe:<ver> .
+FROM ubuntu:24.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl clinfo \
+    && rm -rf /var/lib/apt/lists/*
+ARG NEO
+ARG NEO_TAG
+ARG IGC
+ARG IGC_TAG
+ARG GMM
+WORKDIR /tmp/gpu
+RUN set -eux; cr=https://github.com/intel/compute-runtime/releases/download; \
+    igc=https://github.com/intel/intel-graphics-compiler/releases/download; \
+    curl -fsSLO ${igc}/${IGC_TAG}/intel-igc-core-2_${IGC}_amd64.deb || \
+      curl -fsSLO ${igc}/${IGC_TAG}/intel-igc-core_${IGC}_amd64.deb; \
+    curl -fsSLO ${igc}/${IGC_TAG}/intel-igc-opencl-2_${IGC}_amd64.deb || \
+      curl -fsSLO ${igc}/${IGC_TAG}/intel-igc-opencl_${IGC}_amd64.deb; \
+    curl -fsSLO ${cr}/${NEO_TAG}/intel-opencl-icd_${NEO}_amd64.deb; \
+    curl -fsSLO ${cr}/${NEO_TAG}/libze-intel-gpu1_${NEO}_amd64.deb || \
+      curl -fsSLO ${cr}/${NEO_TAG}/intel-level-zero-gpu_${NEO}_amd64.deb; \
+    curl -fsSLO ${cr}/${NEO_TAG}/libigdgmm12_${GMM}_amd64.deb; \
+    apt-get update; apt-get install -y ./*.deb; rm -rf /tmp/gpu /var/lib/apt/lists/*
+ENTRYPOINT ["bash","-lc","echo DRIVER_PKGS:; dpkg -l | grep -iE 'libze-intel|intel-level-zero-gpu|intel-opencl-icd' | awk '{print $2,$3}'; echo CLINFO:; clinfo 2>&1 | grep -iE 'Number of platforms|Device Name|Driver Version' | head -6"]
