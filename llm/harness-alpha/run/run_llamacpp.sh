@@ -13,6 +13,7 @@
 #   CANDIDATE_SUFFIX       appended to the candidate id so a tuned run is recorded as its own
 #                          row (e.g. CANDIDATE_SUFFIX=-fa-kvq8 -> candidate "llamacpp-vulkan-fa-kvq8")
 #   LLAMACPP_CTX           context size (default 4096)
+#   LLAMACPP_MODEL         absolute path to a GGUF, overriding the shared model (model sweep)
 set -euo pipefail
 
 BACKEND="${1:?usage: run_llamacpp.sh <sycl|vulkan>}"
@@ -23,6 +24,9 @@ source "$HA_DIR/setup/common.sh"
 
 BIN="$BUILD_DIR/llama.cpp/build-$BACKEND/bin/llama-server"
 [ -x "$BIN" ] || die "llama-server for '$BACKEND' not built at $BIN"
+# LLAMACPP_MODEL overrides the shared model (used by the model sweep). Defaults to the
+# canonical shared GGUF from common.sh so existing callers are unaffected.
+MODEL_PATH="${LLAMACPP_MODEL:-$MODEL_PATH}"
 [ -f "$MODEL_PATH" ] || die "shared model missing: $MODEL_PATH (run setup/get_model.sh)"
 
 PORT="${LLAMACPP_PORT:-8080}"
