@@ -101,3 +101,31 @@ output.
    kernel + `xe` availability may change that. One controlled re-run.
 3. **GPU clocks/power** — AGENTS.md gates this (human approval). Check for throttling headroom
    before assuming the 41 tok/s ceiling is the silicon's.
+
+---
+
+## Addendum — GPU clock/power headroom (resolved, 2026-11-04)
+
+Sampled `/sys/class/drm/card1/gt/gt0/rps_act_freq_mhz` at 2 Hz during a live Vulkan baseline
+(median 41.1 tok/s). Result:
+
+- **Under load the A770 pins its maximum 2400 MHz** (RP0 = 2400; sampled median 2400, max
+  2400). Idle sits at ~1000 MHz, ramps to 2400 immediately on load.
+- **Zero throttle flags** across the whole `throttle_reason_*` set (pl1, pl2, pl4, thermal,
+  prochot, vr_thermalert, vr_tdc, ratl all = 0).
+
+**Conclusion:** 41 tok/s is **not** clock- or thermal-limited — the card already runs flat
+out at full clock with no throttling. Raising clocks is therefore a non-lever (nothing to
+raise), and there is no power/thermal headroom to reclaim. The bottleneck is the compute/
+memory-bandwidth efficiency of the Vulkan path at this model size, which points back to
+**model choice** (track 1) as the remaining meaningful lever, not power tuning. No
+power/clock *changes* were made (AGENTS.md); this was read-only telemetry.
+
+## Addendum — model sweep (in progress, 2026-11-04)
+
+Holding backend/flags/task-set fixed and varying only the model (7B → Coder-7B → 14B, all
+Q4_K_M). 7B recorded (median 41.1 tok/s, 2400 MHz peak). Coder-7B and 14B downloads are
+gated on a heavily throttled HF mirror (~0.5 MiB/s) and complete asynchronously via the
+durable `run_model_sweep.sh`; results append to `artifacts/harness-alpha/SWEEP_STATUS.txt`
+and `reports/data/tuning-24.04-kernel7.0/` once verified. Harness + authoritative sha256s
+are committed so the sweep is reproducible regardless of mirror speed.
