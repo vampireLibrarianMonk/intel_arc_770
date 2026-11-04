@@ -1,0 +1,5 @@
+# Container Track-B result — captured 2026-11-02T02:43:36Z
+host kernel: 6.8.0-138-generic
+host NEO (works): 24.39.31294, sees 4 Arc device entries in clinfo
+container NEO 26.35.39758 + libze_intel_gpu.so.1.17.39758: sycl-ls sees ZERO devices on host kernel 6.8
+=> newer NEO userspace cannot drive the GPU through the older host i915; container shares host kernel, cannot fix this.

@@ -1,0 +1,168 @@
+{
+  "candidate": "ipex-llm",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "base_url": "http://127.0.0.1:8099/v1",
+  "timestamp": "2026-11-01T21:04:16+00:00",
+  "max_tokens": 512,
+  "coding": {
+    "passed": 3,
+    "total": 4,
+    "tasks": [
+      {
+        "id": "two_sum",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 15.9,
+        "raw": "```python\ndef solve(nums, target):\n    \"\"\"\n    Finds two indices in the list 'nums' such that their values add up to 'target'.\n    \n    :param nums: List[int] - A list of integers.\n    :param target: int - The target sum.\n    :return: List[int] - A list containing the two indices of the elements in 'nums' that add up to 'target'.\n    \"\"\"\n    num_to_index = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in num_to_index:\n            return [num_to_index[complement], i]\n        num_to_index[num] = i\n    return []  # This line will never be reached if there is exactly one solution\n```"
+      },
+      {
+        "id": "group_anagrams_count",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 16.9,
+        "raw": "```python\nfrom collections import defaultdict\n\ndef solve(words):\n    \"\"\"\n    Returns the number of distinct groups of anagrams in the list `words`.\n    \n    :param words: List of strings\n    :return: Integer representing the number of anagram groups\n    \"\"\"\n    anagram_groups = defaultdict(list)\n    \n    for word in words:\n        # Sort the characters in the word to get the anagram signature\n        sorted_word = ''.join(sorted(word))\n        anagram_groups[sorted_word].append(word)\n    \n    # The number of keys in the dictionary represents the number of anagram groups\n    return len(anagram_groups)\n\n# Example usage\nwords = [\"eat\", \"tea\", \"tan\", \"ate\", \"nat\", \"bat\"]\nprint(solve(words))  # Output: 2\n```"
+      },
+      {
+        "id": "valid_parentheses",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 17.0,
+        "raw": "```python\ndef solve(s):\n    \"\"\"\n    Checks if the input string s containing only brackets: (), {}, [] is balanced.\n    \n    Args:\n    s (str): The input string containing brackets.\n    \n    Returns:\n    bool: True if the string is balanced, False otherwise.\n    \"\"\"\n    bracket_map = {\"(\": \")\", \"[\": \"]\", \"{\": \"}\"}\n    open_brackets = set(bracket_map.keys())\n    stack = []\n    \n    for char in s:\n        if char in open_brackets:\n            stack.append(char)\n        elif stack and char == bracket_map[stack[-1]]:\n            stack.pop()\n        else:\n            return False\n    return not stack\n```"
+      },
+      {
+        "id": "longest_run",
+        "passed": false,
+        "detail": "wrong: solve([1, 1, 2, 2, 3],) -> 2, want 3",
+        "tokens_per_sec": 16.6,
+        "raw": "```python\ndef solve(nums):\n    if not nums:\n        return 0\n    \n    nums.sort()\n    longest_run = 1\n    current_run = 1\n    \n    for i in range(1, len(nums)):\n        if nums[i] == nums[i - 1] + 1:\n            current_run += 1\n            longest_run = max(longest_run, current_run)\n        else:\n            current_run = 1\n    \n    return longest_run\n```"
+      }
+    ]
+  },
+  "writing": {
+    "constraints_met": 4,
+    "total": 4,
+    "tasks": [
+      {
+        "id": "microfiction_constraint",
+        "passed": true,
+        "detail": {
+          "words": 35,
+          "sentences": 3,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:water",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 15.0,
+        "raw": "In the heart of the fog, he tended to the light that guided ships unseen. Each wave's echo was a distant rumor, never a reality. Outside his window, the land whispered secrets of the unknown."
+      },
+      {
+        "id": "opening_paragraph",
+        "passed": true,
+        "detail": {
+          "words": 93,
+          "sentences": 4,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 15.3,
+        "raw": "The rain lashed against the windows of the old lighthouse inn, its relentless drumbeat echoing through the dimly lit rooms. As the storm raged on, Detective Eliza Hart stepped out of her car, her boots squelching in the wet cobblestones. The salty air carried an eerie chill as she made her way to the front door, her mind already racing with the possibilities of the case that awaited her. The town of Storm's End, with its fog-shrouded streets and whispering gales, seemed to hold secrets as dark and deep as the ocean itself."
+      },
+      {
+        "id": "rewrite_tone",
+        "passed": true,
+        "detail": {
+          "words": 24,
+          "sentences": 1,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 17.1,
+        "raw": "Your code has so much potential, and with a few adjustments, it can pass all the tests and get the build back on track!"
+      },
+      {
+        "id": "poem_structure",
+        "passed": true,
+        "detail": {
+          "words": 30,
+          "sentences": 1,
+          "lines": 4,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 15.4,
+        "raw": "In the dark hour when sleep should rule,  \nCode whispers secrets to the screen's cool glow,  \nLines of text dance with error's foul,  \nSeeking logic in the night's cold flow."
+      }
+    ]
+  },
+  "median_tokens_per_sec": 16.6
+}

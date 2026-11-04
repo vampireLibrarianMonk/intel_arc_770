@@ -1,0 +1,12 @@
+# captured 2026-11-01T23:51:44Z
+## kernel
+6.8.0-138-generic
+## intel packages
+intel-gpu-tools=1.26-2ubuntu0.1
+intel-igc-cm=1.0.176.54074-1029~22.04
+intel-opencl-icd=24.39.31294.20-1032~22.04
+libigdfcl1=1.0.17791.16-1032~22.04
+libigdgmm12:amd64=22.5.2-1018~22.04
+libze-dev=1.17.44.0-1022~22.04
+libze-intel-gpu1=24.39.31294.20-1032~22.04
+libze1=1.17.44.0-1022~22.04

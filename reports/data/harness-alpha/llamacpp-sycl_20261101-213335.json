@@ -1,0 +1,168 @@
+{
+  "candidate": "llamacpp-sycl",
+  "model": "Qwen2.5-7B-Instruct-Q4_K_M.gguf",
+  "base_url": "http://127.0.0.1:8080/v1",
+  "timestamp": "2026-11-01T21:33:12+00:00",
+  "max_tokens": 512,
+  "coding": {
+    "passed": 4,
+    "total": 4,
+    "tasks": [
+      {
+        "id": "two_sum",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 34.3,
+        "raw": "```python\ndef solve(nums, target):\n    \"\"\"\n    Finds two numbers in nums that add up to target and returns their indices.\n    \n    :param nums: List[int] -- a list of integers\n    :param target: int -- the target sum\n    :return: List[int] -- a list containing the indices of the two numbers\n    \"\"\"\n    num_to_index = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in num_to_index:\n            return [num_to_index[complement], i]\n        num_to_index[num] = i\n```"
+      },
+      {
+        "id": "group_anagrams_count",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 33.7,
+        "raw": "```python\nfrom collections import defaultdict\n\ndef solve(words):\n    anagram_groups = defaultdict(list)\n    \n    for word in words:\n        # Sort the word to get the anagram signature\n        signature = ''.join(sorted(word))\n        anagram_groups[signature].append(word)\n    \n    # The number of distinct anagram groups is the number of keys in the dictionary\n    return len(anagram_groups)\n```"
+      },
+      {
+        "id": "valid_parentheses",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 33.9,
+        "raw": "```python\ndef solve(s):\n    stack = []\n    mapping = {\")\": \"(\", \"}\": \"{\", \"]\": \"[\"}\n    \n    for char in s:\n        if char in mapping.values():\n            stack.append(char)\n        elif char in mapping.keys():\n            if stack == [] or mapping[char] != stack.pop():\n                return False\n        else:\n            return False\n    \n    return stack == []\n```"
+      },
+      {
+        "id": "longest_run",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 33.9,
+        "raw": "```python\ndef solve(nums):\n    if not nums:\n        return 0\n    \n    max_length = 1\n    current_length = 1\n    \n    for i in range(1, len(nums)):\n        if nums[i] > nums[i-1]:\n            current_length += 1\n            max_length = max(max_length, current_length)\n        else:\n            current_length = 1\n    \n    return max_length\n```"
+      }
+    ]
+  },
+  "writing": {
+    "constraints_met": 4,
+    "total": 4,
+    "tasks": [
+      {
+        "id": "microfiction_constraint",
+        "passed": true,
+        "detail": {
+          "words": 54,
+          "sentences": 3,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:water",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 33.5,
+        "raw": "Ella tended the flame, her footsteps echoing through the stone halls, each one a whisper to the unseen waves beyond. Outside, the wind sang a constant lullaby, carrying tales of distant horizons she could only imagine. Through the fogged glass, she traced the silhouette of ships, longing for the touch of the ocean's embrace."
+      },
+      {
+        "id": "opening_paragraph",
+        "passed": true,
+        "detail": {
+          "words": 125,
+          "sentences": 5,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 34.6,
+        "raw": "The rain lashed against the windows of the old lighthouse inn, its relentless patter a steady drumbeat that matched the pounding in Detective Eliza Hart's temples. The coastal town of Marisport, usually a haven for artists and dreamers, was cloaked in a somber silence, the fog rolling in like an uninvited guest. Eliza, a seasoned detective with a reputation for solving the unsolvable, stepped out onto the porch, her boots squelching in the wet cobblestones. The salty air carried the faint scent of seaweed and the distant cries of gulls, but it did little to dispel the chill that clung to the night. As she lit a cigarette, the flame flickered, casting shadows that danced across her weathered face, hinting at the storm brewing within."
+      },
+      {
+        "id": "rewrite_tone",
+        "passed": true,
+        "detail": {
+          "words": 23,
+          "sentences": 1,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 31.2,
+        "raw": "I understand you're facing some challenges with your code, but let's work together to fix it and get the build back on track!"
+      },
+      {
+        "id": "poem_structure",
+        "passed": true,
+        "detail": {
+          "words": 26,
+          "sentences": 1,
+          "lines": 4,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 32.6,
+        "raw": "In the dead of night, code whispers clues,\nLines flicker like fireflies in the cold,\nErrors dance, mischievous and elusive,\nDebugging drags on, as dawn refuses."
+      }
+    ]
+  },
+  "median_tokens_per_sec": 33.9
+}

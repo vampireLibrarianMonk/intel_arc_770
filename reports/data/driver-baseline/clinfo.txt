@@ -1,0 +1,4 @@
+  Device Name                                     AMD Ryzen 9 5900X 12-Core Processor
+  Device Version                                  OpenCL 3.1 (Build 0)
+  Driver Version                                  2026.22.10.0.01_160000
+  Device Name                                     Intel(R) Arc(TM) A770 Graphics
