@@ -124,8 +124,26 @@ power/clock *changes* were made (AGENTS.md); this was read-only telemetry.
 ## Addendum — model sweep (in progress, 2026-11-04)
 
 Holding backend/flags/task-set fixed and varying only the model (7B → Coder-7B → 14B, all
-Q4_K_M). 7B recorded (median 41.1 tok/s, 2400 MHz peak). Coder-7B and 14B downloads are
-gated on a heavily throttled HF mirror (~0.5 MiB/s) and complete asynchronously via the
-durable `run_model_sweep.sh`; results append to `artifacts/harness-alpha/SWEEP_STATUS.txt`
-and `reports/data/tuning-24.04-kernel7.0/` once verified. Harness + authoritative sha256s
-are committed so the sweep is reproducible regardless of mirror speed.
+Q4_K_M).
+
+| model | median tok/s | peak clock | coding | writing | notes |
+|:--|--:|:--:|:--:|:--:|:--|
+| Qwen2.5-7B-Instruct-Q4 | 42.0 | 2400 MHz | 4/4 | 4/4 | general baseline |
+| Qwen2.5-Coder-7B-Instruct-Q4 | 42.1 | 2400 MHz | 4/4 | 4/4 | coding-tuned; same size/quant |
+| Qwen2.5-14B-Instruct-Q4 | _pending_ | — | — | — | download gated on throttled mirror |
+
+### Interim findings
+
+- **Throughput at 7B-Q4 is model-independent:** general 7B and Coder-7B both run at ~42 tok/s
+  (identical architecture size + quant → identical decode cost). Choosing the Coder model
+  costs nothing in speed.
+- **Our task set does not discriminate 7B quality:** both score coding 4/4, writing 4/4. The
+  Coder model's advantage would only surface on harder problems than the current suite
+  contains. Actionable: if coding quality matters, default to **Coder-7B** — it's free on
+  speed and strictly better-aimed, even though the easy suite can't prove it here.
+- **14B pending:** this is the data point that will quantify the speed cost of doubling
+  parameters (expected: meaningfully slower but still interactive). Completes asynchronously
+  via `run_model_sweep.sh`; results append to `SWEEP_STATUS.txt` and this table.
+
+Raw per-model JSON kept in `reports/data/tuning-24.04-kernel7.0/`. Authoritative sha256s and
+the sweep harness are committed so the sweep is reproducible regardless of mirror speed.
