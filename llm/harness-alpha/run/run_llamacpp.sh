@@ -6,6 +6,13 @@
 #
 # Starts llama-server with full GPU offload, confirms the Arc A770 is actually used (VRAM
 # via fdinfo), then runs bench_openai.py against it.
+#
+# Tuning hooks (optional, all backward compatible — defaults reproduce the 41 tok/s baseline):
+#   LLAMACPP_EXTRA_FLAGS   extra args appended to the llama-server command line
+#                          (e.g. "-fa on -ctk q8_0 -ctv q8_0 -ub 256")
+#   CANDIDATE_SUFFIX       appended to the candidate id so a tuned run is recorded as its own
+#                          row (e.g. CANDIDATE_SUFFIX=-fa-kvq8 -> candidate "llamacpp-vulkan-fa-kvq8")
+#   LLAMACPP_CTX           context size (default 4096)
 set -euo pipefail
 
 BACKEND="${1:?usage: run_llamacpp.sh <sycl|vulkan>}"
@@ -19,7 +26,9 @@ BIN="$BUILD_DIR/llama.cpp/build-$BACKEND/bin/llama-server"
 [ -f "$MODEL_PATH" ] || die "shared model missing: $MODEL_PATH (run setup/get_model.sh)"
 
 PORT="${LLAMACPP_PORT:-8080}"
-CANDIDATE="llamacpp-$BACKEND"
+CANDIDATE="llamacpp-$BACKEND${CANDIDATE_SUFFIX:-}"
+CTX="${LLAMACPP_CTX:-4096}"
+read -r -a EXTRA_FLAGS <<< "${LLAMACPP_EXTRA_FLAGS:-}"
 SLOG="$LOG_DIR/${CANDIDATE}_server.log"
 
 # For SYCL we need the oneAPI + venv-xpu runtime libraries on the path at RUN time too.
@@ -51,8 +60,11 @@ WAIT_SECS=600
 
 log "starting $CANDIDATE server on :$PORT (full GPU offload)"
 # -ngl 999 => offload all layers to GPU; -c context; --no-webui keeps it headless.
+# EXTRA_FLAGS lets the tuning matrix vary flash-attn, KV cache type, ubatch, etc. without
+# forking this runner (shared driver stays identical — AGENTS.md apples-to-apples rule).
+log "launch flags: -ngl 999 -c $CTX --no-webui ${EXTRA_FLAGS[*]:-}"
 "$BIN" --model "$MODEL_PATH" --port "$PORT" --host 127.0.0.1 \
-  -ngl 999 -c 4096 --no-webui > "$SLOG" 2>&1 &
+  -ngl 999 -c "$CTX" --no-webui "${EXTRA_FLAGS[@]}" > "$SLOG" 2>&1 &
 SRV=$!
 trap 'kill $SRV 2>/dev/null || true' EXIT
 
