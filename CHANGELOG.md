@@ -6,6 +6,30 @@ All notable changes to arc-a770-lab. Format follows
 
 ## [Unreleased]
 
+### Verified — kernel 7.0 upgrade holds the Vulkan throughput fix; tuning matrix finds no faster flags
+- Rebooted onto kernel **7.0.0-42** (from 6.8.0-147). Confirmed: `i915` still binds the A770
+  (xe loaded, 0 refs), `render`/`video` groups now apply without an `sg` wrapper, Vulkan sees
+  the card via Mesa 25.2.8 (API 1.4.318). Re-ran the Vulkan baseline → **41.0 tok/s** (4/4
+  coding, 4/4 writing), within noise of the pre-reboot 41.9 — the glslc fix survived the
+  kernel upgrade.
+- **Negative result (stated plainly):** swept six llama.cpp Vulkan launch-flag variants
+  (flash-attn on, 8-bit KV cache, ubatch 256/1024, and combinations) against the baseline.
+  **None beat the defaults.** `-fa on` and ubatch resizing were within ±0.5 tok/s noise;
+  8-bit KV cache (`-ctk/-ctv q8_0`) measurably *hurt* (−1.5 tok/s) — on the Mesa/ANV path the
+  per-access dequant cost outweighs the bandwidth saving at 7B-Q4 / 4K context. Conclusion:
+  default flags are already near-optimal for throughput; the ~41 tok/s ceiling is not set by
+  these knobs. Correctness held across all variants.
+
+### Added — Vulkan tuning matrix
+- `llm/harness-alpha/run_tuning_matrix.sh`: sweeps single-variable tuning levers as distinct
+  candidates, reusing the shared driver + task set. `run/run_llamacpp.sh` parameterized with
+  `LLAMACPP_EXTRA_FLAGS`, `CANDIDATE_SUFFIX`, `LLAMACPP_CTX` (defaults unchanged → still
+  reproduces the ~41 tok/s baseline).
+- `reports/tuning_matrix_plan.md`: context, hypotheses, method, results table, and the next
+  tracks where real gains likely are (model choice, SYCL re-test on 7.0, GPU clocks).
+- `reports/data/tuning-24.04-kernel7.0/`: env capture + raw per-variant JSON + post-reboot
+  verified baseline, kept in-repo (artifacts/ is ephemeral).
+
 ### Fixed — Vulkan Q4 throughput regression on Ubuntu 24.04 (glslc too old)
 - After the 22.04→24.04 reinstall, llama.cpp Vulkan dropped from **40.2 → 27.2 tok/s** on the
   A770 (Qwen2.5-7B Q4_K_M), correctness unchanged (4/4 coding, 4/4 writing). Root-caused to

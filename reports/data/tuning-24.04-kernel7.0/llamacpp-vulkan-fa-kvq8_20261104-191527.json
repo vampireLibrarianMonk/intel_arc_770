@@ -1,0 +1,168 @@
+{
+  "candidate": "llamacpp-vulkan-fa-kvq8",
+  "model": "Qwen2.5-7B-Instruct-Q4_K_M.gguf",
+  "base_url": "http://127.0.0.1:8080/v1",
+  "timestamp": "2026-11-04T19:15:11+00:00",
+  "max_tokens": 512,
+  "coding": {
+    "passed": 4,
+    "total": 4,
+    "tasks": [
+      {
+        "id": "two_sum",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 40.3,
+        "raw": "```python\ndef solve(nums, target):\n    \"\"\"\n    Finds two numbers in nums that add up to target and returns their indices.\n    \n    :param nums: List[int] -- a list of integers\n    :param target: int -- the target sum\n    :return: List[int] -- a list containing the indices of the two numbers\n    \"\"\"\n    num_to_index = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in num_to_index:\n            return [num_to_index[complement], i]\n        num_to_index[num] = i\n```"
+      },
+      {
+        "id": "group_anagrams_count",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 39.6,
+        "raw": "```python\nfrom collections import defaultdict\n\ndef solve(words):\n    anagram_groups = defaultdict(list)\n    \n    for word in words:\n        # Sort the word to get the anagram signature\n        signature = ''.join(sorted(word))\n        anagram_groups[signature].append(word)\n    \n    # The number of distinct anagram groups is the number of keys in the dictionary\n    return len(anagram_groups)\n```"
+      },
+      {
+        "id": "valid_parentheses",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 39.6,
+        "raw": "```python\ndef solve(s):\n    stack = []\n    mapping = {\")\": \"(\", \"}\": \"{\", \"]\": \"[\"}\n    \n    for char in s:\n        if char in mapping.values():\n            stack.append(char)\n        elif char in mapping.keys():\n            if stack == [] or mapping[char] != stack.pop():\n                return False\n        else:\n            return False\n    \n    return stack == []\n```"
+      },
+      {
+        "id": "longest_run",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 40.0,
+        "raw": "```python\ndef solve(nums):\n    if not nums:\n        return 0\n    \n    max_length = 1\n    current_length = 1\n    \n    for i in range(1, len(nums)):\n        if nums[i] > nums[i-1]:\n            current_length += 1\n            max_length = max(max_length, current_length)\n        else:\n            current_length = 1\n    \n    return max_length\n```"
+      }
+    ]
+  },
+  "writing": {
+    "constraints_met": 4,
+    "total": 4,
+    "tasks": [
+      {
+        "id": "microfiction_constraint",
+        "passed": true,
+        "detail": {
+          "words": 39,
+          "sentences": 3,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:water",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 38.2,
+        "raw": "In the heart of the storm, he tended the flame that guided ships unseen. His days were spent in the quiet echo of waves beyond his window. Outside, the sea whispered secrets to the wind, untouched by his gaze."
+      },
+      {
+        "id": "opening_paragraph",
+        "passed": true,
+        "detail": {
+          "words": 104,
+          "sentences": 4,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 40.7,
+        "raw": "The rain lashed against the windows of the old lighthouse, its steady drumming a relentless rhythm that matched the pounding in Detective Elara Myles' temples. She stood by the narrow window, her gaze fixed on the churning sea below, where the rain seemed to merge with the waves, creating an impenetrable gray expanse. The coastal town of Stormhaven, with its fog-shrouded streets and weathered buildings, was a place where secrets hid in the shadows and the past had a way of catching up. Elara, with her sharp eyes and even sharper intuition, was determined to uncover the truth, no matter how murky the waters."
+      },
+      {
+        "id": "rewrite_tone",
+        "passed": true,
+        "detail": {
+          "words": 27,
+          "sentences": 1,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 35.7,
+        "raw": "I understand that your code didn't pass all the tests and the build is currently broken, but let's work together to find the issues and fix them!"
+      },
+      {
+        "id": "poem_structure",
+        "passed": true,
+        "detail": {
+          "words": 26,
+          "sentences": 1,
+          "lines": 4,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 36.7,
+        "raw": "In the dead of night, code whispers clues,\nLines flicker like fireflies in the cold,\nErrors dance, mischievous and elusive,\nDebugging drags on, as dawn refuses."
+      }
+    ]
+  },
+  "median_tokens_per_sec": 39.6
+}

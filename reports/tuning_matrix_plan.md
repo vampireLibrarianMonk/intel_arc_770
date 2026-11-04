@@ -58,5 +58,46 @@ python3 llm/harness-alpha/aggregate.py                 # comparison table
 
 ## Results
 
-_Pending run — populated from `artifacts/harness-alpha/TUNING_STATUS.txt` and the per-variant
-JSON records below._
+Run 2026-11-04 (kernel 7.0.0-42, Mesa 25.2.8, model Qwen2.5-7B-Q4_K_M, ctx 4096, greedy).
+Raw per-variant JSON in `artifacts/harness-alpha/llamacpp-vulkan-*_*.json`; status log in
+`artifacts/harness-alpha/TUNING_STATUS.txt`.
+
+| variant | flags | median tok/s | Δ vs baseline | coding | writing |
+|:--|:--|--:|--:|:--:|:--:|
+| `-baseline` | *(defaults)* | 41.2 | — | 4/4 | 4/4 |
+| `-ub256` | `-ub 256` | 41.1 | −0.1 | 4/4 | 4/4 |
+| `-fa-on` | `-fa on` | 41.0 | −0.2 | 4/4 | 4/4 |
+| `-ub1024` | `-ub 1024` | 41.0 | −0.2 | 4/4 | 4/4 |
+| `-fa-kvq8` | `-fa on -ctk q8_0 -ctv q8_0` | 39.6 | **−1.6** | 4/4 | 4/4 |
+| `-fa-kvq8-ub256` | `-fa on -ctk q8_0 -ctv q8_0 -ub 256` | 39.7 | **−1.5** | 4/4 | 4/4 |
+
+### Conclusion (negative result — stated plainly)
+
+**No lever improved throughput.** `-fa on` and ubatch resizing are within run-to-run noise
+(~±0.5 tok/s). 8-bit KV cache (`-ctk/-ctv q8_0`) measurably *hurt* (−1.5 tok/s): on the
+Mesa/ANV Vulkan path the per-access dequant cost outweighs the bandwidth saving at this
+model size and 4K context.
+
+Takeaway: **for 7B-Q4 at 4K context on the A770 Vulkan backend, the default llama.cpp flags
+are already near-optimal for decode throughput.** The ~41 tok/s ceiling is not set by these
+knobs. Correctness held everywhere (coding 4/4, writing 4/4), so none of the flags broke
+output.
+
+### Uncertainty / limits
+
+- Single run per variant; deltas under ~1 tok/s are not significant. Flash-attn and ubatch
+  should be treated as "no effect", not "tiny effect".
+- Only decode throughput measured. KV quant's real payoff is **larger context within VRAM**,
+  not speed — not exercised here (4K fit comfortably in 16 GiB uncompressed).
+- Mesa ANV does not expose per-process VRAM via fdinfo; GPU use inferred from the ~41 vs
+  ~8 tok/s CPU regime.
+
+### Where the real levers likely are (next tracks, not yet run)
+
+1. **Model choice** — Qwen2.5-Coder-7B (coding quality) or a 14B-Q4 (~9 GiB, fits 16 GiB)
+   for better output at still-usable speed. This trades tok/s for capability, which may be
+   the better lever for the writing+coding goal than chasing tok/s.
+2. **SYCL re-test on kernel 7.0** — prior cycle had SYCL slower (33.9) than Vulkan; the newer
+   kernel + `xe` availability may change that. One controlled re-run.
+3. **GPU clocks/power** — AGENTS.md gates this (human approval). Check for throttling headroom
+   before assuming the 41 tok/s ceiling is the silicon's.
