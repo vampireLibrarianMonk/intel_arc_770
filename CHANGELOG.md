@@ -6,6 +6,24 @@ All notable changes to arc-a770-lab. Format follows
 
 ## [Unreleased]
 
+### Fixed — Vulkan Q4 throughput regression on Ubuntu 24.04 (glslc too old)
+- After the 22.04→24.04 reinstall, llama.cpp Vulkan dropped from **40.2 → 27.2 tok/s** on the
+  A770 (Qwen2.5-7B Q4_K_M), correctness unchanged (4/4 coding, 4/4 writing). Root-caused to
+  the **build-time shader toolchain**, not the driver or kernel: Ubuntu 24.04's stock `shaderc`
+  (2023.8) cannot compile `GL_EXT_integer_dot_product` (quantized-matmul accelerator) or
+  bfloat16/coopmat2, so llama.cpp's Vulkan backend silently fell back to a slow path. Confirmed
+  the GPU ran at full 2400 MHz with no throttle, and that both OS builds used the **same
+  llama.cpp SHA `dde879b`** (the b1/b22 tags are only `git describe` counts). Fix: install
+  LunarG **shaderc 2025.2** from the Vulkan SDK noble repo and rebuild → **41.9 tok/s** (above
+  the old 40.2). `setup/llamacpp_vulkan.sh` now gates the build on a glslc capability probe and
+  refuses to produce a slow binary. Full write-up:
+  `reports/data/baseline-24.04-kernel6.8/vulkan_baseline.md`.
+
+### Added
+- `reports/data/baseline-24.04-kernel6.8/`: first on-hardware baseline after the 24.04
+  reinstall (env capture + Vulkan baseline + root-cause). Also records a provisioning trap:
+  a fresh user must be in the `render`/`video` groups or Vulkan silently uses llvmpipe (CPU).
+
 ### Added — LLM harness alpha cycle
 - `llm/harness-alpha/`: a reproducible four-candidate comparison of local inference harnesses
   (llama.cpp Vulkan, llama.cpp SYCL, LM Studio, IPEX-LLM) for coding + creative-writing

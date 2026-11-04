@@ -46,9 +46,16 @@ disk), the llama.cpp builds, rollback debs for NEO 24.39, gdb backtraces in
    `PersistentDeviceCodeCache::getItemFromDisc` in `libsycl.so.9`).
 4. Full harness re-run on 24.04 (`run_all.sh`) for all four candidates, same GGUF. Mesa is
    newer on 24.04, so Vulkan numbers may move; compare against the 22.04 table, not memory.
-5. Kernel lever: install the 24.04 HWE kernel (keep the 6.8 entry selectable in GRUB), then
-   retry NEO 26.35 enumeration with the lean probe (`container/Dockerfile.neo-probe`).
+5. Kernel lever (explicit goal of the 24.04 upgrade: unlock newer driver options): install
+   the 24.04 HWE kernel (keep the 6.8 entry selectable in GRUB), then retry NEO 26.35
+   enumeration with the lean probe (`container/Dockerfile.neo-probe`).
    Human-approval-required; re-run test 1 afterwards.
+   Status on the new host (2026-11-04): booted 6.8.0-147-generic, `i915` bound to 56a0
+   (the `xe` module is loaded but not bound). `linux-generic-hwe-24.04` is not installed;
+   apt candidate is 7.0.0-42.42~24.04.1. Candidate command (not run):
+   `sudo apt install linux-generic-hwe-24.04`. Once on 7.0, also test the `xe` driver
+   (`xe.force_probe=56a0`, `i915.force_probe=!56a0`) against `i915`, and record
+   kernel/NEO/IGC/GmmLib versions per AGENTS.md. Rollback: pick 6.8.0-147 in GRUB.
 6. Decision gate: SYCL is adopted only if correct (4/4, 4/4) AND faster than Vulkan's 40.2.
 
 ## 3. Never tested (still open, optional)
