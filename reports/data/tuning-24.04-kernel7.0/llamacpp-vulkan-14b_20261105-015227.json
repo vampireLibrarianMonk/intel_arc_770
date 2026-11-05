@@ -1,0 +1,168 @@
+{
+  "candidate": "llamacpp-vulkan-14b",
+  "model": "Qwen2.5-14B-Instruct-Q4_K_M.gguf",
+  "base_url": "http://127.0.0.1:8080/v1",
+  "timestamp": "2026-11-05T01:51:55+00:00",
+  "max_tokens": 512,
+  "coding": {
+    "passed": 4,
+    "total": 4,
+    "tasks": [
+      {
+        "id": "two_sum",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 22.2,
+        "raw": "```python\ndef solve(nums, target):\n    num_to_index = {}\n    for index, num in enumerate(nums):\n        complement = target - num\n        if complement in num_to_index:\n            return [num_to_index[complement], index]\n        num_to_index[num] = index\n\n# Example usage\nnums = [2, 7, 11, 15]\ntarget = 9\nprint(solve(nums, target))  # Output: [0, 1]\n```"
+      },
+      {
+        "id": "group_anagrams_count",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 22.2,
+        "raw": "```python\nfrom collections import defaultdict\n\ndef solve(words):\n    anagram_groups = defaultdict(int)\n    for word in words:\n        # Sort the word to get the anagram key\n        sorted_word = ''.join(sorted(word))\n        anagram_groups[sorted_word] += 1\n    \n    # The number of distinct groups is the number of unique keys in the dictionary\n    return len(anagram_groups)\n\n# Example usage\nwords = [\"eat\", \"tea\", \"tan\", \"ate\", \"nat\", \"bat\"]\nprint(solve(words))  # Output: 3\n```"
+      },
+      {
+        "id": "valid_parentheses",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 22.3,
+        "raw": "```python\ndef solve(s):\n    stack = []\n    mapping = {\")\": \"(\", \"}\": \"{\", \"]\": \"[\"}\n    for char in s:\n        if char in mapping.values():\n            stack.append(char)\n        elif char in mapping.keys():\n            if stack == [] or mapping[char] != stack.pop():\n                return False\n        else:\n            return False\n    return stack == []\n\n# Example usage\nprint(solve(\"()\"))  # True\nprint(solve(\"()[]{}\"))  # True\nprint(solve(\"(]\"))  # False\nprint(solve(\"([)]\"))  # False\nprint(solve(\"{[]}\"))  # True\n```"
+      },
+      {
+        "id": "longest_run",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 21.9,
+        "raw": "```python\ndef solve(nums):\n    if not nums:\n        return 0\n    \n    max_length = 1\n    current_length = 1\n    \n    for i in range(1, len(nums)):\n        if nums[i] > nums[i - 1]:\n            current_length += 1\n            max_length = max(max_length, current_length)\n        else:\n            current_length = 1\n    \n    return max_length\n```"
+      }
+    ]
+  },
+  "writing": {
+    "constraints_met": 3,
+    "total": 4,
+    "tasks": [
+      {
+        "id": "microfiction_constraint",
+        "passed": true,
+        "detail": {
+          "words": 61,
+          "sentences": 3,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:water",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 21.8,
+        "raw": "Marinus tended the light, ensuring it cut through the foggy veil each night, unaware of the vastness it guarded. His world was the stone tower and the rhythmic hum of the generator; the horizon was a myth whispered by sailors. One stormy eve, a breach in the cliff revealed the roar and touch of the unseen waves, startling him into silence."
+      },
+      {
+        "id": "opening_paragraph",
+        "passed": false,
+        "detail": {
+          "words": 64,
+          "sentences": 2,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": false
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 21.8,
+        "raw": "The relentless rain in the coastal town of Mist Hollow drummed against the old wooden shutters of the Seafoam Inn, casting long, shadowy fingers across the dimly lit lobby. Among the few guests huddled by the fireplace was a man named Eliot, his eyes fixed on the swirling storm outside, his thoughts lost in the labyrinth of secrets that the town seemed to hold."
+      },
+      {
+        "id": "rewrite_tone",
+        "passed": true,
+        "detail": {
+          "words": 24,
+          "sentences": 1,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 20.0,
+        "raw": "I see there are some challenges with the current build, but don't worry, let's work through this together and get everything running smoothly again."
+      },
+      {
+        "id": "poem_structure",
+        "passed": true,
+        "detail": {
+          "words": 26,
+          "sentences": 1,
+          "lines": 4,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 20.2,
+        "raw": "Moonlight casts long shadows, code awry,\nEyes blur through screens, in silence, I sigh,\nDebugging dreams in the darkest hour,\nFinding glitches, fixing, then sleep's power."
+      }
+    ]
+  },
+  "median_tokens_per_sec": 21.9
+}

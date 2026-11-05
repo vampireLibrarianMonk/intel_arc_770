@@ -121,29 +121,43 @@ memory-bandwidth efficiency of the Vulkan path at this model size, which points 
 **model choice** (track 1) as the remaining meaningful lever, not power tuning. No
 power/clock *changes* were made (AGENTS.md); this was read-only telemetry.
 
-## Addendum — model sweep (in progress, 2026-11-04)
+## Addendum — model sweep (complete, 2026-11-05)
 
-Holding backend/flags/task-set fixed and varying only the model (7B → Coder-7B → 14B, all
-Q4_K_M).
+Holding backend/flags/task-set fixed and varying only the model (all Q4_K_M, Vulkan, ctx
+4096, greedy). All three pinned 2400 MHz under load (no throttle), so throughput differences
+are pure compute volume.
 
-| model | median tok/s | peak clock | coding | writing | notes |
-|:--|--:|:--:|:--:|:--:|:--|
-| Qwen2.5-7B-Instruct-Q4 | 42.0 | 2400 MHz | 4/4 | 4/4 | general baseline |
-| Qwen2.5-Coder-7B-Instruct-Q4 | 42.1 | 2400 MHz | 4/4 | 4/4 | coding-tuned; same size/quant |
-| Qwen2.5-14B-Instruct-Q4 | _pending_ | — | — | — | download gated on throttled mirror |
+| model | size | median tok/s | coding | writing | fits 16 GiB |
+|:--|--:|--:|:--:|:--:|:--:|
+| Qwen2.5-7B-Instruct-Q4 | 4.4 GB | 42.0 | 4/4 | 4/4 | yes |
+| Qwen2.5-Coder-7B-Instruct-Q4 | 4.4 GB | 42.1 | 4/4 | 4/4 | yes |
+| Qwen2.5-14B-Instruct-Q4 | 8.4 GB | **21.9** | 4/4 | 3/4* | yes |
 
-### Interim findings
+\* The 14B's one writing miss is a `min_sentences` constraint on `opening_paragraph` (64
+words in 2 sentences, wanted ≥3) — a structural-checker miss, **not** a prose-quality
+failure. The coarse constraint checks don't prove the 14B writes worse; raw text is saved
+for human judgement.
 
-- **Throughput at 7B-Q4 is model-independent:** general 7B and Coder-7B both run at ~42 tok/s
-  (identical architecture size + quant → identical decode cost). Choosing the Coder model
-  costs nothing in speed.
-- **Our task set does not discriminate 7B quality:** both score coding 4/4, writing 4/4. The
-  Coder model's advantage would only surface on harder problems than the current suite
-  contains. Actionable: if coding quality matters, default to **Coder-7B** — it's free on
-  speed and strictly better-aimed, even though the easy suite can't prove it here.
-- **14B pending:** this is the data point that will quantify the speed cost of doubling
-  parameters (expected: meaningfully slower but still interactive). Completes asynchronously
-  via `run_model_sweep.sh`; results append to `SWEEP_STATUS.txt` and this table.
+### Findings
 
-Raw per-model JSON kept in `reports/data/tuning-24.04-kernel7.0/`. Authoritative sha256s and
-the sweep harness are committed so the sweep is reproducible regardless of mirror speed.
+- **Parameter count is the dominant speed lever, inversely:** doubling 7B→14B roughly halves
+  throughput (42 → 22 tok/s). Both are clock-saturated at 2400 MHz; the 14B is slower purely
+  because it does ~2x the compute per token.
+- **14B fits comfortably** (8.4 GB model + KV in 16 GiB) and 22 tok/s is still interactive
+  (faster than typical reading speed). It's a reasonable "quality when you want it" option.
+- **At 7B, model choice is free on speed** (general vs Coder both 42 tok/s). Prefer Coder-7B
+  for coding-heavy use.
+- **The task set is too easy to rank quality** — every model scores 4/4 coding, and writing
+  "failures" are structural-check artifacts. To actually differentiate models we need a
+  harder suite (see next step).
+
+### Recommendation for the stated goal (creative writing + Python coding)
+
+- **Default / interactive:** Qwen2.5-Coder-7B-Q4 — 42 tok/s, free coding specialization.
+- **Quality pass / harder problems:** Qwen2.5-14B-Q4 — 22 tok/s, more capability, still fits
+  and stays interactive.
+- Speed is not improvable by flags or clocks (both already shown maxed); the only speed lever
+  is picking the smaller model. The real remaining work is a **discriminating task set** to
+  prove where the 14B's extra capability actually pays off.
+
+Raw per-model JSON in `reports/data/tuning-24.04-kernel7.0/`.

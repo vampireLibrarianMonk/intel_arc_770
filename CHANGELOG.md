@@ -23,12 +23,25 @@ All notable changes to arc-a770-lab. Format follows
 ### Added — Vulkan tuning matrix
 - `llm/harness-alpha/run_tuning_matrix.sh`: sweeps single-variable tuning levers as distinct
   candidates, reusing the shared driver + task set. `run/run_llamacpp.sh` parameterized with
-  `LLAMACPP_EXTRA_FLAGS`, `CANDIDATE_SUFFIX`, `LLAMACPP_CTX` (defaults unchanged → still
-  reproduces the ~41 tok/s baseline).
-- `reports/tuning_matrix_plan.md`: context, hypotheses, method, results table, and the next
-  tracks where real gains likely are (model choice, SYCL re-test on 7.0, GPU clocks).
-- `reports/data/tuning-24.04-kernel7.0/`: env capture + raw per-variant JSON + post-reboot
-  verified baseline, kept in-repo (artifacts/ is ephemeral).
+  `LLAMACPP_EXTRA_FLAGS`, `CANDIDATE_SUFFIX`, `LLAMACPP_CTX`, `LLAMACPP_MODEL` (defaults
+  unchanged → still reproduces the ~41 tok/s baseline).
+- `reports/tuning_matrix_plan.md`: context, hypotheses, results tables, and conclusions for
+  the flag matrix, GPU clock headroom, and the model sweep.
+- `reports/data/tuning-24.04-kernel7.0/`: env capture + raw per-variant/per-model JSON.
+
+### Investigated — GPU clock headroom + model sweep (where the real lever is)
+- **GPU is not clock/thermal-limited:** read-only telemetry shows the A770 pins its max
+  2400 MHz (RP0) under load with every `throttle_reason_*` flag at 0. Raising clocks is a
+  non-lever — nothing to raise. No power/clock changes made (AGENTS.md gate respected).
+- **Model sweep (7B / Coder-7B / 14B, all Q4, Vulkan):** throughput is governed by parameter
+  count, not flags or clocks. Both 7B models run **42 tok/s** (coding 4/4, writing 4/4);
+  **14B runs 21.9 tok/s** (coding 4/4, writing 3/4 — the one miss is a structural
+  `min_sentences` check, not a quality failure). 14B (8.4 GB) fits 16 GiB comfortably and
+  stays interactive. Recommendation: **Coder-7B** for interactive coding (free on speed),
+  **14B** for a quality pass. Added `run_model_sweep.sh` + `setup/get_model_generic.sh`
+  (sha256-gated fetch for any GGUF). Key limitation surfaced: the current task set is too
+  easy to rank model quality (everything scores ~4/4) — a harder, discriminating suite is the
+  next step.
 
 ### Fixed — Vulkan Q4 throughput regression on Ubuntu 24.04 (glslc too old)
 - After the 22.04→24.04 reinstall, llama.cpp Vulkan dropped from **40.2 → 27.2 tok/s** on the
