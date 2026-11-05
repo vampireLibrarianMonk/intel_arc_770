@@ -161,3 +161,69 @@ for human judgement.
   prove where the 14B's extra capability actually pays off.
 
 Raw per-model JSON in `reports/data/tuning-24.04-kernel7.0/`.
+
+## Addendum — hard discriminating task set (2026-11-05)
+
+The alpha set saturated every model at ~4/4, so it could not rank quality. Built
+`tasks_hard.py`: 5 real algorithmic coding problems (longest palindromic substring, edit
+distance, interval merge, coin change, hand-written expression parser — each with edge-case
+tests) and 5 tighter writing tasks (exact 6-word story, compound forbidden+required
+constraints, C-O-D-E acrostic, jargon-free explanation, subtext dialogue). Run via
+`run_hard_suite.sh` against on-disk models (no downloads).
+
+| model | hard coding | hard writing | median tok/s |
+|:--|:--:|:--:|--:|
+| Qwen2.5-7B-Instruct-Q4 | 4/5 | 2/5 | 42.7 |
+| Qwen2.5-14B-Instruct-Q4 | **5/5** | **3/5** | 21.7 |
+| Qwen2.5-Coder-7B-Instruct-Q4 | not captured† | not captured† | ~42 |
+
+† The Coder-7B hard run surfaced a **harness robustness bug** (see below) and the capture was
+blocked by intermittent process-launch flakiness in the session environment. The bug is fixed
+and unit-tested; re-running `run_hard_suite.sh` will complete it.
+
+### The hard set discriminates (the point of building it)
+
+- **7B fails where 14B succeeds.** The 7B failed the expression parser (`IndexError`, an
+  edge-case bug), botched the exact-6-word story, and missed two writing constraint sets.
+  The 14B went **5/5 coding** (including the parser) and **3/5 writing** (nailed the 6-word
+  story and acrostic). On the alpha set both were 4/4 — the hard set makes the 14B's extra
+  capability measurable.
+- **Shared hard ceiling:** both missed `explain_to_child` (both wrote "hash" despite the ban)
+  and the subtext dialogue — genuinely hard negative-constraint instruction-following that
+  even 14B doesn't clear. Good signal that the set has headroom for bigger models.
+
+### Harness robustness fix (prompted by the hard set)
+
+Harder coding prompts make models more likely to emit **infinite loops**. `score_coding`
+ran model code with no execution bound, so one looping generation hung the whole benchmark
+(observed: a single task stalled the client ~14 min). Fixed with a `SIGALRM` watchdog
+(`_time_limit`) around both the code-defining `exec` and every test call; a runaway now fails
+as `timeout (>Ns) — likely infinite loop` instead of hanging. Unit-verified: a `while True`
+solution aborts in 2 s, correct code still passes instantly.
+
+## Addendum — are we stuck with Qwen? (model research, 2026-11-05)
+
+**No.** Qwen2.5 is a strong default but several other open-weight families fit the A770's
+16 GiB at Q4 and bring different strengths, especially for creative writing where Qwen's
+"synthetic-data slop" is a known weakness. Candidates worth benchmarking on this card
+(all have mature GGUF/llama.cpp support, all Q4 fit 16 GiB):
+
+| family / model | ~Q4 size | why try it | license |
+|:--|--:|:--|:--|
+| **Mistral-Nemo-12B-Instruct** | ~7 GB | 128K ctx, strong reasoning/coding for its size; de-slopped community fine-tunes (e.g. "low-slop" storyteller variants) are popular for creative writing | Apache-2.0 |
+| **Llama-3.1-8B-Instruct** | ~4.9 GB | widely cited best all-round small *writer*; clean grammar, strong instruction-following | Llama license |
+| **Gemma-2-9B-it** | ~5.8 GB | noticeably tidy prose for its size; good for copy/email/explanatory writing | Gemma license |
+| **DeepSeek-Coder-V2-Lite-Instruct (16B MoE, ~2.4B active)** | ~10 GB | coding-specialist; MoE means high quality at lower active compute → potentially faster than a dense 14B | DeepSeek license |
+| **Phi-4 (14B)** | ~8.5 GB | strong reasoning/STEM for size; good coding | MIT |
+
+Notes and next step:
+- These span three different tradeoffs: **writing quality** (Llama-3.1-8B, Gemma-2-9B,
+  Mistral-Nemo de-slop fine-tunes), **coding** (DeepSeek-Coder-V2-Lite, Phi-4), and **speed
+  via MoE** (DeepSeek-Coder-V2-Lite's low active-parameter count is the one plausible way to
+  beat the dense-model speed/quality curve we measured).
+- The sweep harness already takes any GGUF via `get_model_generic.sh <repo> <file> <size>
+  <sha256>`, so adding these is just more rows in `run_model_sweep.sh` once their authoritative
+  sha256s are pulled from HF. The hard task set + exec-timeout fix make the comparison both
+  discriminating and hang-proof.
+- Licenses differ (Apache-2.0 for Qwen/Mistral vs model-specific terms for Llama/Gemma/
+  DeepSeek) — worth noting if this ever ships beyond local use.

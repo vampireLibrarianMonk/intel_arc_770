@@ -29,6 +29,29 @@ All notable changes to arc-a770-lab. Format follows
   the flag matrix, GPU clock headroom, and the model sweep.
 - `reports/data/tuning-24.04-kernel7.0/`: env capture + raw per-variant/per-model JSON.
 
+### Added — hard discriminating task set + harness robustness fix
+- `llm/harness-alpha/tasks_hard.py`: 5 real algorithmic coding problems (longest palindromic
+  substring, edit distance, interval merge, coin change, hand-written expression parser) with
+  edge-case tests, and 5 tighter writing tasks (exact 6-word story, compound forbidden+required
+  constraints, C-O-D-E acrostic, jargon-free explanation, subtext dialogue). Selectable via
+  `bench_openai.py --task-set hard` / `TASK_SET=hard`; `run_hard_suite.sh` runs it on all
+  on-disk models. `score.py` gains required-inclusion + acrostic checks.
+- **It discriminates:** on the hard set the 7B scores coding 4/5 + writing 2/5 vs the 14B's
+  **5/5 + 3/5** — the capability gap the alpha set (both 4/4) couldn't show. Both still miss
+  the hardest negative-constraint instruction-following, leaving headroom for larger models.
+- **Fixed a harness hang the hard set exposed:** harder prompts make models more likely to
+  emit infinite loops; `score_coding` ran model code unbounded and one looping generation
+  stalled the whole benchmark (~14 min). Added a `SIGALRM` watchdog around the defining
+  `exec` and every test call — a runaway now fails as a timeout. Unit-verified.
+
+### Researched — alternatives to Qwen (not locked in)
+- `reports/tuning_matrix_plan.md` now lists non-Qwen open-weight models that fit 16 GiB at
+  Q4 with mature GGUF support and complementary strengths: **Mistral-Nemo-12B** (writing,
+  de-slop fine-tunes, 128K ctx), **Llama-3.1-8B** (all-round writer), **Gemma-2-9B** (tidy
+  prose), **DeepSeek-Coder-V2-Lite** (MoE — the one plausible way to beat the dense
+  speed/quality curve), **Phi-4** (reasoning/coding). The sweep harness already accepts any
+  GGUF, so adding them is data, not code.
+
 ### Investigated — GPU clock headroom + model sweep (where the real lever is)
 - **GPU is not clock/thermal-limited:** read-only telemetry shows the A770 pins its max
   2400 MHz (RP0) under load with every `throttle_reason_*` flag at 0. Raising clocks is a

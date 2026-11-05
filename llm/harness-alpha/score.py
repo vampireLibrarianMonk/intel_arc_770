@@ -12,6 +12,36 @@ existing llm/ harness.
 import contextlib
 import io
 import re
+import signal
+
+
+class _Timeout(Exception):
+    pass
+
+
+@contextlib.contextmanager
+def _time_limit(seconds):
+    """Abort the wrapped block if it runs longer than `seconds` (SIGALRM, main thread only).
+
+    The hard task set occasionally elicits model code with an infinite loop; without this,
+    exec()/the test call would hang the whole benchmark (observed: a single task stalling the
+    client for 14 min). SIGALRM only fires on the main thread — the benchmark runs scoring
+    inline there, so this is sufficient. Falls back to a no-op if alarms are unavailable.
+    """
+    if not hasattr(signal, "SIGALRM"):
+        yield
+        return
+
+    def _handler(signum, frame):
+        raise _Timeout(f"execution exceeded {seconds}s")
+
+    old = signal.signal(signal.SIGALRM, _handler)
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, old)
 
 
 def extract_code(text):
@@ -36,13 +66,19 @@ def _compare(got, want, mode):
     return got == want
 
 
-def score_coding(output, task):
-    """Execute the generated function against the task tests. Returns (passed, detail)."""
+def score_coding(output, task, exec_timeout=5):
+    """Execute the generated function against the task tests. Returns (passed, detail).
+
+    Each stage (defining the code, and every test call) is bounded by `exec_timeout` seconds
+    so model output containing an infinite loop fails as a timeout instead of hanging the run.
+    """
     code = extract_code(output)
     ns = {}
     try:
-        with contextlib.redirect_stdout(io.StringIO()):
+        with contextlib.redirect_stdout(io.StringIO()), _time_limit(exec_timeout):
             exec(code, ns)  # nosec B102 - intentional; see module docstring
+    except _Timeout as e:
+        return False, f"timeout_defining_code: {e}"
     except Exception as e:  # noqa: BLE001
         return False, f"exec_error: {type(e).__name__}: {e}"
     fn = ns.get(task["entry"])
@@ -51,7 +87,10 @@ def score_coding(output, task):
     mode = task.get("compare", "eq")
     for args, want in task["tests"]:
         try:
-            got = fn(*args)
+            with _time_limit(exec_timeout):
+                got = fn(*args)
+        except _Timeout:
+            return False, f"timeout (>{exec_timeout}s) on {args!r} — likely infinite loop"
         except Exception as e:  # noqa: BLE001
             return False, f"call_error on {args!r}: {type(e).__name__}: {e}"
         if not _compare(got, want, mode):
