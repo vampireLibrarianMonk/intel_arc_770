@@ -87,6 +87,14 @@ def score_writing(output, task):
         check("min_lines", lines >= task["min_lines"])
     for w in task.get("forbidden", []):
         check(f"forbidden:{w}", w.lower() not in text.lower())
+    for w in task.get("required", []):
+        check(f"required:{w}", w.lower() in text.lower())
+    # acrostic: first letters of the non-empty lines must spell the target (case-insensitive)
+    if "acrostic" in task:
+        target = task["acrostic"].upper()
+        line_firsts = [ln.strip()[0].upper() for ln in text.splitlines() if ln.strip()]
+        got = "".join(line_firsts[: len(target)])
+        check(f"acrostic:{target}", got == target)
     # crude repetition-collapse guard: no single token should be >35% of the output
     toks = [t for t in re.findall(r"\w+", text.lower()) if t]
     if toks:

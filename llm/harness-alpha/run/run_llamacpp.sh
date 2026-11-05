@@ -14,6 +14,7 @@
 #                          row (e.g. CANDIDATE_SUFFIX=-fa-kvq8 -> candidate "llamacpp-vulkan-fa-kvq8")
 #   LLAMACPP_CTX           context size (default 4096)
 #   LLAMACPP_MODEL         absolute path to a GGUF, overriding the shared model (model sweep)
+#   TASK_SET               'alpha' (default, easy) or 'hard' (discriminating task set)
 set -euo pipefail
 
 BACKEND="${1:?usage: run_llamacpp.sh <sycl|vulkan>}"
@@ -89,4 +90,5 @@ log "running shared benchmark ..."
 python3 -u "$HA_DIR/bench_openai.py" \
   --base-url "http://127.0.0.1:$PORT/v1" \
   --model "$(basename "$MODEL_PATH")" \
-  --candidate "$CANDIDATE"
+  --candidate "$CANDIDATE" \
+  --task-set "${TASK_SET:-alpha}"

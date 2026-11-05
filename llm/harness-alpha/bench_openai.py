@@ -23,7 +23,17 @@ import urllib.request
 from datetime import datetime, timezone
 
 from score import score_coding, score_writing
-from tasks import all_tasks
+
+
+def load_tasks(task_set):
+    """Return (coding, writing) for the chosen set: 'alpha' (default) or 'hard'."""
+    if task_set == "hard":
+        import tasks_hard
+
+        return tasks_hard.all_tasks()
+    from tasks import all_tasks
+
+    return all_tasks()
 
 
 def chat(base_url, api_key, model, prompt, max_tokens, timeout=600):
@@ -65,16 +75,21 @@ def main():
     ap.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY", "not-needed"))
     ap.add_argument("--max-tokens", type=int, default=512)
     ap.add_argument(
+        "--task-set", default="alpha", choices=["alpha", "hard"],
+        help="which task set: 'alpha' (default, easy) or 'hard' (discriminating)",
+    )
+    ap.add_argument(
         "--out-dir",
         default=os.path.expanduser("~/projects/intel_arc_770/artifacts/harness-alpha"),
     )
     args = ap.parse_args()
 
-    coding, writing = all_tasks()
+    coding, writing = load_tasks(args.task_set)
     result = {
         "candidate": args.candidate,
         "model": args.model,
         "base_url": args.base_url,
+        "task_set": args.task_set,
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "max_tokens": args.max_tokens,
     }
