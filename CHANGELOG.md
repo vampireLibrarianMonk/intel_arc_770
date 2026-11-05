@@ -44,13 +44,17 @@ All notable changes to arc-a770-lab. Format follows
   stalled the whole benchmark (~14 min). Added a `SIGALRM` watchdog around the defining
   `exec` and every test call — a runaway now fails as a timeout. Unit-verified.
 
-### Researched — alternatives to Qwen (not locked in)
-- `reports/tuning_matrix_plan.md` now lists non-Qwen open-weight models that fit 16 GiB at
-  Q4 with mature GGUF support and complementary strengths: **Mistral-Nemo-12B** (writing,
-  de-slop fine-tunes, 128K ctx), **Llama-3.1-8B** (all-round writer), **Gemma-2-9B** (tidy
-  prose), **DeepSeek-Coder-V2-Lite** (MoE — the one plausible way to beat the dense
-  speed/quality curve), **Phi-4** (reasoning/coding). The sweep harness already accepts any
-  GGUF, so adding them is data, not code.
+### Researched + tested — alternatives to Qwen (not locked in)
+- `reports/tuning_matrix_plan.md` lists non-Qwen open-weight models that fit 16 GiB at Q4
+  with mature GGUF support and complementary strengths. `run_alt_models.sh` + the hardened
+  harness benchmark them on the hard task set; `reports/alt_models_comparison.md` collects the
+  side-by-side.
+- **First results confirm we are not stuck with Qwen:** **Llama-3.1-8B** matches the Qwen-14B
+  writing score (3/5 hard) at half the params and ~2x the speed (42 vs 22 tok/s), and ties
+  Qwen-7B on coding — a strong, faster writing default. **Phi-3.5-mini (3.8B)** runs
+  **76.8 tok/s** (~2x the 7-8B class) but drops quality (3/5 coding, 2/5 writing) — a
+  speed-for-simple-work pick. Gemma-2-9B / Mistral-Nemo-12B / DeepSeek-Coder-V2-Lite pending
+  (downloads gated on a throttled mirror; an HF token will unblock them).
 
 ### Investigated — GPU clock headroom + model sweep (where the real lever is)
 - **GPU is not clock/thermal-limited:** read-only telemetry shows the A770 pins its max
