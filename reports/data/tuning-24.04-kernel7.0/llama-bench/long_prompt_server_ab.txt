@@ -1,0 +1,13 @@
+== Qwen2.5-7B-Instruct default
+{"run": 0, "prompt_tokens": 10916, "completion_tokens": 85, "wall_s": 27.94, "prompt_tok_s": 430.5, "gen_tok_s": 32.8}
+{"run": 1, "prompt_tokens": 10916, "completion_tokens": 85, "wall_s": 29.04, "prompt_tok_s": 417.6, "gen_tok_s": 32.8}
+== Qwen2.5-7B-Instruct fa-off-nocache
+{"run": 0, "prompt_tokens": 10916, "completion_tokens": 74, "wall_s": 19.3, "prompt_tok_s": 630.1, "gen_tok_s": 37.5}
+{"run": 1, "prompt_tokens": 10916, "completion_tokens": 74, "wall_s": 19.32, "prompt_tok_s": 627.6, "gen_tok_s": 37.4}
+== Qwen2.5-14B-Instruct default
+{"run": 0, "prompt_tokens": 10916, "completion_tokens": 92, "wall_s": 67.38, "prompt_tok_s": 179.2, "gen_tok_s": 14.1}
+{"run": 1, "prompt_tokens": 10916, "completion_tokens": 86, "wall_s": 68.01, "prompt_tok_s": 179.5, "gen_tok_s": 14.1}
+== Qwen2.5-14B-Instruct fa-off-nocache
+{"run": 0, "prompt_tokens": 10914, "completion_tokens": 89, "wall_s": 40.59, "prompt_tok_s": 306.6, "gen_tok_s": 17.7}
+{"run": 1, "prompt_tokens": 10916, "completion_tokens": 86, "wall_s": 40.73, "prompt_tok_s": 303.2, "gen_tok_s": 17.7}
+LP_DONE
