@@ -19,6 +19,12 @@
 
 Check: `cat artifacts/harness-alpha/PENDING_STATUS.txt`
 
+Then `eval-v2` (systemd user unit, armed 2026-11-06 19:00 UTC) starts automatically: the
+new coding + creative-writing regime (`llm/eval-v2/README.md`) over all 9 models, then both
+judges, then `reports/eval_v2/results.md` + `review_packet.md` + `ballot.txt`. It takes ~4 h
+after the chain completes. Check: `cat artifacts/eval-v2/STATUS.txt`. Once it's done, read
+the packet, fill in the ballot, and run `python3 llm/eval-v2/tally.py`.
+
 ## When it finishes
 
 - Copy `artifacts/harness-alpha/openvino-gpu-int4-7b_*.json`,

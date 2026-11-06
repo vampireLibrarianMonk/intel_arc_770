@@ -6,6 +6,27 @@ All notable changes to arc-a770-lab. Format follows
 
 ## [Unreleased]
 
+### Added — eval-v2: real coding + creative-writing evaluation (2026-11-06)
+- Why: the harness-alpha writing score never judged quality. It checked word counts and banned
+  words on five short puzzles, and nobody read the outputs. Everything was also greedy and run
+  once.
+- `llm/eval-v2/` (method in its README):
+  - **Coding:** 15 executed tasks across algorithms, bugfixes, a class, strict parsing, graphs
+    and utilities. Each gets a greedy pass@1 plus 3 sampled attempts. Every attempt runs in an
+    isolated subprocess with a timeout and a memory cap. Each new task's reference solution
+    passes its tests (`--selftest`), and the original buggy code fails them.
+  - **Writing:** 10 realistic prompts × 2 samples (T=0.8) with fixed seeds, plus a slot for
+    your own prompts (`user_prompts/*.txt`).
+  - **Writing scores, three layers:** automatic diagnostics; a blind 5-criterion rubric from
+    two local judges (Qwen2.5-14B, gpt-oss-20b), given measured length/truncation facts and
+    calibration caps, with self-scores excluded; and a blind human ranking packet of the top
+    4 writers, tallied by Borda count (`tally.py`).
+- Smoke-tested end to end on Phi-3.5. The first judge prompt gave 9-10 to an over-length,
+  cut-off scene, so calibration rules were added; after that a deliberately bad control
+  scored 2.4 vs 5.75 for real attempts.
+- The full run is queued (`run_eval_v2.sh`, unit `eval-v2`): it waits for the download chain,
+  then runs all 9 models and both judges and writes `reports/eval_v2/`.
+
 ### Added — Intel compute runtime + OpenVINO GPU path; flash-attention mystery solved (2026-11-06)
 - **System change (approved):** installed NEO 26.40.40196.8, IGC 2.42.6, GmmLib 22.10.2
   (replacing Ubuntu's 22.3.17), Level Zero loader 1.34.0 from the GitHub release `.deb`s
