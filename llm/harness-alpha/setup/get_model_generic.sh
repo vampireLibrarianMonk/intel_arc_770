@@ -31,6 +31,21 @@ if [ -f "$DEST" ]; then
 fi
 
 URL="https://huggingface.co/${REPO}/resolve/main/${FILE}?download=true"
+# Optional auth: if HF_TOKEN (or HUGGING_FACE_HUB_TOKEN) is set, send it as a Bearer header
+# to lift anonymous rate/throughput limits. Passed via a curl config on stdin (-K -) so the
+# token never appears in argv / `ps` output. Anonymous download is used when no token is set.
+HF_AUTH_TOKEN="${HF_TOKEN:-${HUGGING_FACE_HUB_TOKEN:-}}"
+if [ -n "$HF_AUTH_TOKEN" ]; then
+  log "using HF auth token (value not logged)"
+fi
+hf_curl() {
+  if [ -n "$HF_AUTH_TOKEN" ]; then
+    printf 'header = "Authorization: Bearer %s"\n' "$HF_AUTH_TOKEN" \
+      | curl -K - "$@"
+  else
+    curl "$@"
+  fi
+}
 log "downloading $FILE from $REPO -> $DEST"
 attempt=0
 while :; do
@@ -38,7 +53,7 @@ while :; do
   cur=0; [ -f "$DEST.part" ] && cur="$(stat -c %s "$DEST.part")"
   [ "$cur" -ge "$WANT_SIZE" ] && break
   log "pass $attempt: $((cur / 1048576)) / $((WANT_SIZE / 1048576)) MiB"
-  curl -L --fail -sS --retry 5 --retry-delay 5 -C - -o "$DEST.part" "$URL" || true
+  hf_curl -L --fail -sS --retry 5 --retry-delay 5 -C - -o "$DEST.part" "$URL" || true
   sleep 3
 done
 
