@@ -1,0 +1,249 @@
+{
+  "candidate": "llamacpp-vulkan-gemma2-9b",
+  "model": "gemma-2-9b-it-Q4_K_M.gguf",
+  "base_url": "http://127.0.0.1:8080/v1",
+  "task_set": "hard",
+  "timestamp": "2026-11-06T02:34:12+00:00",
+  "max_tokens": 512,
+  "coding": {
+    "passed": 3,
+    "total": 5,
+    "tasks": [
+      {
+        "id": "longest_palindrome_substring",
+        "passed": false,
+        "detail": "wrong: solve('babad',) -> 'aba', want 'bab'",
+        "tokens_per_sec": 24.9,
+        "raw": "```python\ndef solve(s):\n  n = len(s)\n  if n < 2:\n    return s\n  dp = [[False] * n for _ in range(n)]\n  for i in range(n):\n    dp[i][i] = True\n  max_len = 1\n  start = 0\n  for i in range(n - 1, -1, -1):\n    for j in range(i + 1, n):\n      if s[i] == s[j]:\n        if j - i == 1 or dp[i + 1][j - 1]:\n          dp[i][j] = True\n          if j - i + 1 > max_len:\n            max_len = j - i + 1\n            start = i\n  return s[start : start + max_len]\n```"
+      },
+      {
+        "id": "edit_distance",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 27.8,
+        "raw": "```python\ndef solve(a, b):\n  n = len(a)\n  m = len(b)\n  dp = [[0 for _ in range(m + 1)] for _ in range(n + 1)]\n\n  for i in range(n + 1):\n    dp[i][0] = i\n  for j in range(m + 1):\n    dp[0][j] = j\n\n  for i in range(1, n + 1):\n    for j in range(1, m + 1):\n      if a[i - 1] == b[j - 1]:\n        dp[i][j] = dp[i - 1][j - 1]\n      else:\n        dp[i][j] = 1 + min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])\n\n  return dp[n][m]\n```"
+      },
+      {
+        "id": "merge_intervals",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 27.3,
+        "raw": "```python\ndef solve(intervals):\n    if not intervals:\n        return []\n    intervals.sort(key=lambda x: x[0])\n    merged = [intervals[0]]\n    for current in intervals[1:]:\n        last = merged[-1]\n        if current[0] <= last[1]:\n            merged[-1][1] = max(last[1], current[1])\n        else:\n            merged.append(current)\n    return merged\n```"
+      },
+      {
+        "id": "coin_change_min",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 27.4,
+        "raw": "```python\ndef solve(coins, amount):\n    dp = [amount + 1] * (amount + 1)\n    dp[0] = 0\n    for a in range(1, amount + 1):\n        for c in coins:\n            if a - c >= 0:\n                dp[a] = min(dp[a], 1 + dp[a - c])\n    return dp[amount] if dp[amount] != amount + 1 else -1 \n```"
+      },
+      {
+        "id": "basic_calculator",
+        "passed": false,
+        "detail": "call_error on ('1 + 1',): ValueError: invalid literal for int() with base 10: '1+1'",
+        "tokens_per_sec": 27.9,
+        "raw": "```python\ndef solve(expr):\n  if expr.isdigit():\n    return int(expr)\n  \n  ops = {'+': lambda a, b: a + b, '-': lambda a, b: a - b, '*': lambda a, b: a * b, '/': lambda a, b: a // b}\n  \n  expr = expr.replace(' ', '')\n  \n  if '(' in expr:\n    start = expr.find('(')\n    end = expr.find(')')\n    \n    while start != -1 and end != -1:\n      subexpression = expr[start + 1:end]\n      expr = expr[:start] + str(solve(subexpression)) + expr[end + 1:]\n      start = expr.find('(')\n      end = expr.find(')')\n  \n  tokens = expr.split()\n  stack = []\n  \n  for token in tokens:\n    if token in ops:\n      operand2 = stack.pop()\n      operand1 = stack.pop()\n      result = ops[token](operand1, operand2)\n      stack.append(result)\n    else:\n      stack.append(int(token))\n  \n  return stack[0]\n```"
+      }
+    ]
+  },
+  "writing": {
+    "constraints_met": 2,
+    "total": 5,
+    "tasks": [
+      {
+        "id": "six_word_story",
+        "passed": true,
+        "detail": {
+          "words": 6,
+          "sentences": 1,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 16.2,
+        "raw": "Empty swing set, wind whispers goodbye. \n"
+      },
+      {
+        "id": "constrained_scene",
+        "passed": false,
+        "detail": {
+          "words": 55,
+          "sentences": 5,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": false
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:fear",
+              "pass": true
+            },
+            {
+              "name": "forbidden:nervous",
+              "pass": true
+            },
+            {
+              "name": "forbidden:silence",
+              "pass": true
+            },
+            {
+              "name": "required:button",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 26.9,
+        "raw": "The elevator lurched, throwing them both off balance.  He pressed the button for the 10th floor, his knuckles white against the worn metal.  She stared at the flickering fluorescent lights, her breath catching in her throat.  The air hung thick and heavy, charged with an unspoken tension.  The doors slid open, revealing a darkened hallway. \n\n\n"
+      },
+      {
+        "id": "acrostic_code",
+        "passed": true,
+        "detail": {
+          "words": 18,
+          "sentences": 1,
+          "lines": 4,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": true
+            },
+            {
+              "name": "acrostic:CODE",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 24.3,
+        "raw": "Crimson threads of logic bind,\nOcean depths of thought unwind,\nDancing patterns, secrets hide,\nEchoes whisper, truths inside \n"
+      },
+      {
+        "id": "explain_to_child",
+        "passed": false,
+        "detail": {
+          "words": 44,
+          "sentences": 3,
+          "lines": 3,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:key",
+              "pass": true
+            },
+            {
+              "name": "forbidden:value",
+              "pass": true
+            },
+            {
+              "name": "forbidden:bucket",
+              "pass": true
+            },
+            {
+              "name": "forbidden:hash",
+              "pass": false
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 25.7,
+        "raw": "Imagine a big box of toys where each toy has a special name tag.  \n\nYou can quickly find any toy by just saying its name tag. \n\nThe box helps you remember where each toy is, just like a hash map helps computers remember things! \n\n\n"
+      },
+      {
+        "id": "dialogue_subtext",
+        "passed": false,
+        "detail": {
+          "words": 38,
+          "sentences": 9,
+          "lines": 6,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": false
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": true
+            },
+            {
+              "name": "forbidden:curfew",
+              "pass": true
+            },
+            {
+              "name": "forbidden:home",
+              "pass": true
+            },
+            {
+              "name": "forbidden:time",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 26.1,
+        "raw": "\"You're out later than usual tonight.\"\n\"It's not that late, Mom.\"\n\"I expect you to be here before things get too crazy.\"\n\"Crazy? What are you talking about?\"\n\"You know what I mean. Be responsible.\"\n\"I am responsible.\" \n\n\n"
+      }
+    ]
+  },
+  "median_tokens_per_sec": 26.9
+}

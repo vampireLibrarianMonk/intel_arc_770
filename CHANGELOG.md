@@ -53,8 +53,24 @@ All notable changes to arc-a770-lab. Format follows
   writing score (3/5 hard) at half the params and ~2x the speed (42 vs 22 tok/s), and ties
   Qwen-7B on coding — a strong, faster writing default. **Phi-3.5-mini (3.8B)** runs
   **76.8 tok/s** (~2x the 7-8B class) but drops quality (3/5 coding, 2/5 writing) — a
-  speed-for-simple-work pick. Gemma-2-9B / Mistral-Nemo-12B / DeepSeek-Coder-V2-Lite pending
-  (downloads gated on a throttled mirror; an HF token will unblock them).
+  speed-for-simple-work pick.
+- **Remaining three models now scored** (hard set, Vulkan, kernel 7.0, all sha256-verified,
+  GPU at 2400 MHz): **DeepSeek-Coder-V2-Lite** 58.6 tok/s, coding 4/5, writing 0/5;
+  **Gemma-2-9B** 26.9 tok/s, 3/5 + 2/5; **Mistral-Nemo-12B** 27.9 tok/s, 4/5 + 1/5. None beat
+  Llama-3.1-8B (writing) or Qwen-14B (quality). The MoE is the speed outlier (2.7x the
+  Qwen-14B) but is not a writer and does not out-code the 7-8B dense models. Single greedy run
+  per model; a one-task gap is within noise. Cause of gemma-2/Nemo's lower tok/s not
+  investigated. Details: `reports/alt_models_comparison.md`.
+
+### Added — resume driver for unscored models; optional HF auth in fetcher
+- `llm/harness-alpha/run_alt_models_pending.sh`: runs only the gemma/Nemo/DeepSeek rows with the
+  same fetcher, runner, flags and candidate suffixes as `run_alt_models.sh`, so finished models
+  are not re-benchmarked.
+- `setup/get_model_generic.sh`: if `HF_TOKEN`/`HUGGING_FACE_HUB_TOKEN` is set, sends it as a
+  Bearer header via a curl config on stdin (not in argv/`ps`, not logged). Anonymous fetch is
+  unchanged when unset. It did not speed up downloads: the cap measured the same against a
+  non-HF server, so the earlier "throttled HF mirror" diagnosis was wrong (local uplink).
+- `.gitignore`: ignore `.env` / `.env.*` so a token file cannot be committed by accident.
 
 ### Investigated — GPU clock headroom + model sweep (where the real lever is)
 - **GPU is not clock/thermal-limited:** read-only telemetry shows the A770 pins its max

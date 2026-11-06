@@ -1,0 +1,249 @@
+{
+  "candidate": "llamacpp-vulkan-mistral-nemo-12b",
+  "model": "Mistral-Nemo-Instruct-2407-Q4_K_M.gguf",
+  "base_url": "http://127.0.0.1:8080/v1",
+  "task_set": "hard",
+  "timestamp": "2026-11-06T05:51:15+00:00",
+  "max_tokens": 512,
+  "coding": {
+    "passed": 4,
+    "total": 5,
+    "tasks": [
+      {
+        "id": "longest_palindrome_substring",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 28.2,
+        "raw": "```python\ndef solve(s):\n    def expand_around_center(left, right):\n        while left >= 0 and right < len(s) and s[left] == s[right]:\n            left -= 1\n            right += 1\n        return s[left + 1:right]\n\n    if not s:\n        return \"\"\n\n    longest = \"\"\n    for i in range(len(s)):\n        odd_palindrome = expand_around_center(i, i)\n        even_palindrome = expand_around_center(i, i + 1)\n        longest = max(longest, odd_palindrome, even_palindrome, key=len)\n    return longest\n```"
+      },
+      {
+        "id": "edit_distance",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 28.4,
+        "raw": "```python\ndef solve(a, b):\n    m, n = len(a), len(b)\n    dp = [[0] * (n + 1) for _ in range(m + 1)]\n\n    for i in range(m + 1):\n        dp[i][0] = i\n    for j in range(n + 1):\n        dp[0][j] = j\n\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                dp[i][j] = dp[i - 1][j - 1]\n            else:\n                dp[i][j] = 1 + min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])\n\n    return dp[m][n]\n```"
+      },
+      {
+        "id": "merge_intervals",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 27.8,
+        "raw": "```python\ndef solve(intervals):\n    if not intervals:\n        return []\n\n    intervals.sort(key=lambda x: x[0])\n    merged = [intervals[0]]\n\n    for interval in intervals[1:]:\n        if interval[0] <= merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], interval[1])\n        else:\n            merged.append(interval)\n\n    return merged\n```"
+      },
+      {
+        "id": "coin_change_min",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 27.9,
+        "raw": "```python\ndef solve(coins, amount):\n    dp = [float('inf')] * (amount + 1)\n    dp[0] = 0\n\n    for coin in coins:\n        for i in range(coin, amount + 1):\n            dp[i] = min(dp[i], dp[i - coin] + 1)\n\n    return dp[amount] if dp[amount] != float('inf') else -1\n```"
+      },
+      {
+        "id": "basic_calculator",
+        "passed": false,
+        "detail": "call_error on ('1 + 1',): TypeError: 'in <string>' requires string as left operand, not int",
+        "tokens_per_sec": 28.7,
+        "raw": "Here's a Python function `solve(expr)` that meets your requirements. It uses the `shlex` library to tokenize the input expression and then builds an abstract syntax tree (AST) to evaluate the expression with proper precedence and associativity.\n\n```python\nimport shlex\nimport ast\n\nclass Node:\n    def __init__(self, val, left=None, right=None):\n        self.val = val\n        self.left = left\n        self.right = right\n\ndef build_ast(tokens):\n    nodes = []\n    for token in tokens:\n        if token == '(':\n            nodes.append(Node('('))\n        elif token == ')':\n            while nodes[-1].val != '(':\n                nodes.append(Node(')'))\n                nodes = nodes[:-1]\n            nodes.append(Node(')'))\n        elif token in '+-*/':\n            while nodes and nodes[-1].val in '+-*/':\n                nodes.append(Node(token))\n                nodes = nodes[:-1]\n            nodes.append(Node(token))\n        else:\n            nodes.append(Node(int(token)))\n    return nodes\n\ndef evaluate(node):\n    if node.val == '+':\n        return evaluate(node.left) + evaluate(node.right)\n    elif node.val == '-':\n        return evaluate(node.left) - evaluate(node.right)\n    elif node.val == '*':\n        return evaluate(node.left) * evaluate(node.right)\n    elif node.val == '/':\n        return evaluate(node.left) // evaluate(node.right)\n    else:\n        return node.val\n\ndef solve(expr):\n    lexer = shlex.shlex(expr)\n    lexer.wordchars += '+-*/()'\n    tokens = list(lexer)\n    ast = build_ast(tokens)\n    return evaluate(ast[0])\n```\n\nYou can use this function like this:\n\n```python\nprint(solve(\"2 + 3 * (4 - 1)\"))  # Output: 9\nprint(solve(\"10 / 2 + 3\"))       # Output: 7\n```"
+      }
+    ]
+  },
+  "writing": {
+    "constraints_met": 1,
+    "total": 5,
+    "tasks": [
+      {
+        "id": "six_word_story",
+        "passed": true,
+        "detail": {
+          "words": 6,
+          "sentences": 1,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 15.8,
+        "raw": "He lost her in the crowd."
+      },
+      {
+        "id": "constrained_scene",
+        "passed": false,
+        "detail": {
+          "words": 74,
+          "sentences": 5,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:fear",
+              "pass": true
+            },
+            {
+              "name": "forbidden:nervous",
+              "pass": false
+            },
+            {
+              "name": "forbidden:silence",
+              "pass": true
+            },
+            {
+              "name": "required:button",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 28.0,
+        "raw": "The elevator doors slid open, revealing a man with a wild, unkempt beard and eyes that darted nervously. A woman, her back pressed against the corner, stiffened as he stepped in. He reached for the button panel, his fingers hovering over the numbers, then suddenly changed his mind, his hand trembling. The woman's breath hitched as he turned to face her, his expression unreadable. The elevator lurched into motion, the air thick with tension."
+      },
+      {
+        "id": "acrostic_code",
+        "passed": false,
+        "detail": {
+          "words": 4,
+          "sentences": 1,
+          "lines": 4,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": false
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": true
+            },
+            {
+              "name": "acrostic:CODE",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 22.6,
+        "raw": "Cascading\nOceans\nDance,\nEchoing."
+      },
+      {
+        "id": "explain_to_child",
+        "passed": false,
+        "detail": {
+          "words": 53,
+          "sentences": 4,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:key",
+              "pass": true
+            },
+            {
+              "name": "forbidden:value",
+              "pass": true
+            },
+            {
+              "name": "forbidden:bucket",
+              "pass": true
+            },
+            {
+              "name": "forbidden:hash",
+              "pass": false
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 27.5,
+        "raw": "Imagine you have a big box of toys. To find your favorite toy quickly, you make a special rule: you put all the toys that start with 'A' in one corner, 'B' in another, and so on. That's like a hash map! It helps you find things fast by using a simple rule."
+      },
+      {
+        "id": "dialogue_subtext",
+        "passed": false,
+        "detail": {
+          "words": 45,
+          "sentences": 6,
+          "lines": 5,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": false
+            },
+            {
+              "name": "forbidden:curfew",
+              "pass": true
+            },
+            {
+              "name": "forbidden:home",
+              "pass": true
+            },
+            {
+              "name": "forbidden:time",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 27.5,
+        "raw": "Parent: \"I expect you to be responsible and make good choices.\"\nTeenager: \"I'm not a kid anymore, I can handle myself.\"\nParent: \"I'm not saying you can't, but communication is key.\"\nTeenager: \"I'll check in, but I need some freedom.\"\nParent: \"Remember, actions have consequences.\""
+      }
+    ]
+  },
+  "median_tokens_per_sec": 27.9
+}
