@@ -6,6 +6,28 @@ All notable changes to arc-a770-lab. Format follows
 
 ## [Unreleased]
 
+### Added — Intel compute runtime + OpenVINO GPU path; flash-attention mystery solved (2026-11-06)
+- **System change (approved):** installed NEO 26.40.40196.8, IGC 2.42.6, GmmLib 22.10.2
+  (replacing Ubuntu's 22.3.17), Level Zero loader 1.34.0 from the GitHub release `.deb`s
+  (sha256 matched GitHub's published digests). NEO 26.40 enumerates the A770 on kernel 7.0;
+  NEO 26.35 had found 0 devices on 6.8. Vulkan unaffected (7B tg128 45.7 tok/s after).
+  Rollback: `sudo apt remove intel-igc-core-2 intel-igc-opencl-2 intel-ocloc intel-opencl-icd
+  libze-intel-gpu1 libze1` and reinstall `libigdgmm12=22.3.17+ds1-1ubuntu1`.
+- **OpenVINO GenAI 2026.4.1 runs on the A770 GPU** but is not faster: on the identical
+  Qwen2.5-7B Q4_K_M GGUF, 38.4 tok/s in the harness (4/5, 2/5) vs llama.cpp Vulkan 42-43
+  (4/5, 2/5). Steady-state 41.5-42.2 tok/s; KV precision, dynamic quant group and latency hint
+  are not levers. `run/ov_server.py`, `run/run_openvino.sh`, `ov_sweep.py`. Native int4-ov
+  pending.
+- **Flash-attention-off slowdown explained:** with `-fa off` the server's host-RAM prompt cache
+  spends 1.8-3.1 s per request saving/restoring slot state (~12 ms with FA on). With
+  `-fa off --cache-ram 0` the 7B runs 43.7 tok/s on the hard set, and an ~11K-token prompt is
+  answered 31% (7B) / 40% (14B) faster than with defaults. `run_long_prompt_ab.sh`,
+  `long_prompt_bench.py`.
+- Speculative decoding draft-length sweep on 14B: n-max 3 = 31.9, 4 = 30.9, 5 = 27.9, 8 = 12.2
+  tok/s. n-max 3 is now the recommended setting.
+- `run_pending_evals.sh`: unattended chain that scores OpenVINO native int4, then gpt-oss-20b
+  with and without EAGLE3, as their downloads complete.
+
 ### Added — speculative decoding, model registry, follow-up audit (2026-11-06)
 - **Speculative decoding is the first measured throughput win:** Qwen2.5-14B + Qwen2.5-0.5B
   draft (`--spec-draft-n-max 4`) runs **31.0 tok/s vs 21.5** (+44%, reproduced twice; 54% draft

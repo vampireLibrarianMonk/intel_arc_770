@@ -1,28 +1,34 @@
 # Next session — pick up here
 
-## State (2026-11-06)
+## State (2026-11-06, afternoon)
 
-- All eight on-disk models are scored on the hard set and sha256-verified; see
-  `llm/harness-alpha/MODELS.md` for the registry and recommended configs.
-- Follow-up audit done: `reports/followup_techniques.md`. Headline: speculative decoding makes
-  Qwen2.5-14B 21.5 → 31 tok/s. Matrix cores on the A770 are a 10x prefill regression (negative).
+- Registry + recommended configs: `llm/harness-alpha/MODELS.md`. Full findings:
+  `reports/followup_techniques.md`.
+- Intel compute runtime installed (NEO 26.40 / IGC 2.42.6 / L0 1.34.0) with approval;
+  OpenVINO GenAI sees the A770. On identical GGUF weights it is ~5-10% slower than Vulkan.
+- `-fa off` mystery solved: pair it with `--cache-ram 0`. It's a 31-40% win on long prompts.
 
 ## Running unattended
 
-- `ha-followup-fetch` (systemd user unit): downloading `gpt-oss-20b-MXFP4.gguf` (12.1 GB,
-  ~0.3 MiB/s, roughly 10 h from 13:40 UTC 2026-11-06). The EAGLE3 head and 0.5B draft are
-  already on disk.
-  Check: `ls -la artifacts/harness-alpha/models/ | grep gpt-oss` and
-  `tail artifacts/harness-alpha/logs/fetch_followup.log`.
+`ha-pending` (systemd user unit) runs `llm/harness-alpha/run_pending_evals.sh`:
+1. waits for `openvino_model.bin` of `OpenVINO/Qwen2.5-7B-Instruct-int4-ov` (unit `ha-ov-bin`,
+   4.46 GB at ~0.35 MiB/s, ~3.5 h from 15:15 UTC), then scores it on the hard set and runs the
+   OpenVINO config sweep;
+2. then fetches gpt-oss-20b MXFP4 (11.5 GB left, ~9-10 h), scores it at `--reasoning-effort
+   low` with and without EAGLE3, and runs llama-bench.
 
-## To do
+Check: `cat artifacts/harness-alpha/PENDING_STATUS.txt`
 
-1. When gpt-oss-20b lands: benchmark it on the hard set, then again with
-   `--spec-type draft-eagle3 -md eagle3-gpt-oss-20b-Q8_0.gguf`. Add rows to `MODELS.md`. Note
-   it is a reasoning model, so check that its output channel parses cleanly in `bench_openai.py`.
-2. **Needs your approval:** Intel compute runtime (NEO + Level Zero) so OpenVINO GenAI
-   (already in `.venv-ov`) can use the GPU. Prefer a container/local prefix; Ubuntu's
-   `intel-opencl-icd` 23.43 is old.
-3. Investigate why `-fa off` halves `llama-server` generation when llama-bench says it should
-   help.
-4. Optional: Qwen3.5-9B; prune gemma-2-9b / Mistral-Nemo if disk gets tight (~12 GiB).
+## When it finishes
+
+- Copy `artifacts/harness-alpha/openvino-gpu-int4-7b_*.json`,
+  `llamacpp-vulkan-gptoss20b*_*.json`, `logs/ov_sweep_int4_7b.jsonl`,
+  `logs/llama_bench_gptoss20b.md` into `reports/data/tuning-24.04-kernel7.0/`.
+- Fill §6 (int4) and §4 (gpt-oss) in `reports/followup_techniques.md`, and add rows to
+  `MODELS.md`. For gpt-oss, read the raw outputs: a reasoning model can run out of the
+  512-token budget before answering, which would be a harness artifact, not a quality result.
+
+## Not run, by choice
+
+- llama.cpp SYCL: Vulkan is faster here and upstream agrees; needs a multi-GB oneAPI download.
+- `xe` kernel driver: needs a reboot with kernel parameters changed, so do it while present.

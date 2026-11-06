@@ -37,12 +37,13 @@ Prune candidates total ~16.7 GiB. Nothing has been deleted; re-downloading costs
 
 | use | model + flags | tok/s |
 |:--|:--|--:|
-| best quality (coding) | Qwen2.5-14B + `--spec-type draft-simple -md Qwen2.5-0.5B-Instruct-Q8_0.gguf --spec-draft-ngl 999 --spec-draft-n-max 4` | ~31 |
+| best quality (coding) | Qwen2.5-14B + `--spec-type draft-simple -md Qwen2.5-0.5B-Instruct-Q8_0.gguf --spec-draft-ngl 999 --spec-draft-n-max 3` | ~32 |
 | fast writing / general | Meta-Llama-3.1-8B, default flags | ~42 |
 | fastest usable | DeepSeek-Coder-V2-Lite (coding only — fails writing constraints) | ~59 |
+| long prompts (~8K+ tokens) | any of the above + `-fa off --cache-ram 0` | 31-40% faster responses at ~11K tokens |
 
-Leave flash attention at its default in `llama-server` (turning it off halved generation in
-the harness; cause unknown).
+`-fa off` must be paired with `--cache-ram 0`. On its own it halves harness throughput: the
+host-RAM prompt cache takes 2-3 s per request to save/restore without flash attention.
 
 ## Auxiliary files
 
