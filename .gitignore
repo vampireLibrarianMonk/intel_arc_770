@@ -1,3 +1,8 @@
+# Secrets (HF_TOKEN etc.) — never commit
+.env
+.env.*
+!.env.example
+
 # Upstream clones and bulky outputs are not tracked
 /vendor/
 /artifacts/
