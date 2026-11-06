@@ -6,6 +6,31 @@ All notable changes to arc-a770-lab. Format follows
 
 ## [Unreleased]
 
+### Added — speculative decoding, model registry, follow-up audit (2026-11-06)
+- **Speculative decoding is the first measured throughput win:** Qwen2.5-14B + Qwen2.5-0.5B
+  draft (`--spec-draft-n-max 4`) runs **31.0 tok/s vs 21.5** (+44%, reproduced twice; 54% draft
+  acceptance). The 7B gains only +10% (42.2 → 46.4). n-max 8 is slower on both; n-gram
+  speculation does nothing on this task set. Caveat: the draft changed greedy outputs (14B
+  coding 5/5 → 4/5 in both runs, on the already-fragile `basic_calculator`).
+  `llm/harness-alpha/run_spec_decoding.sh`.
+- **Negative:** enabling Vulkan cooperative-matrix (matrix cores) on the A770 makes prompt
+  processing ~9-10x slower with no generation change, confirming upstream's allow-list. Patch
+  kept for re-testing on newer Mesa: `patches/ggml-vulkan-allow-xe1-discrete-coopmat.patch`.
+- **Unexplained:** llama-bench shows `-fa 0` doubling long-context prefill, but `-fa off` in
+  `llama-server` halves generation in the harness (3 runs, `-np 1` ruled out). Defaults kept.
+- Context sweep: generation falls 30-50% and prefill 5-10x by 16K context. Fits measured:
+  7B 32K (fa off), 14B 24K (fa on) / 20K (fa off).
+- `llm/harness-alpha/MODELS.md`: registry of all on-disk models (sha256 re-verified, all 8
+  match), pp/tg per model, hard-set scores, keep/prune verdicts, recommended configs.
+- `setup/fetch_followup_models.sh`: hash-pinned fetch of the 0.5B draft, gpt-oss-20b MXFP4 and
+  its EAGLE3 head (gpt-oss still downloading).
+- Built `llama-bench`, `llama-perplexity`, `llama-quantize` (were never built).
+- Ran the Qwen2.5-Coder-7B hard set, which had never completed: 4/5 coding, 3/5 writing,
+  41.8 tok/s.
+- OpenVINO GenAI 2026.4.1 installed in `.venv-ov` (local), but it only sees the CPU: the GPU
+  plugin needs the Intel compute runtime, which is an approval-gated driver install.
+- Full write-up: `reports/followup_techniques.md`.
+
 ### Verified — kernel 7.0 upgrade holds the Vulkan throughput fix; tuning matrix finds no faster flags
 - Rebooted onto kernel **7.0.0-42** (from 6.8.0-147). Confirmed: `i915` still binds the A770
   (xe loaded, 0 refs), `render`/`video` groups now apply without an `sg` wrapper, Vulkan sees
