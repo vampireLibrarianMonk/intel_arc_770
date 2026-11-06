@@ -33,12 +33,20 @@ def load(model, device, props):
     STATE.update(pipe=pipe, model_id=model)
 
 
-def generate(messages, max_tokens):
+def generate(messages, max_tokens, temperature=0.0, top_p=1.0, seed=None):
     pipe = STATE["pipe"]
     prompt = pipe.get_tokenizer().apply_chat_template(messages, add_generation_prompt=True)
     cfg = og.GenerationConfig()
     cfg.max_new_tokens = max_tokens
-    cfg.do_sample = False  # greedy, matching temperature=0 in bench_openai.py
+    if temperature and temperature > 0:
+        # sampled decoding, mirroring the OpenAI/llama-server request fields
+        cfg.do_sample = True
+        cfg.temperature = float(temperature)
+        cfg.top_p = float(top_p)
+        if seed is not None:
+            cfg.rng_seed = int(seed)
+    else:
+        cfg.do_sample = False  # greedy, matching temperature=0
     cfg.apply_chat_template = False  # template already applied above
     res = pipe.generate([prompt], cfg)
     pm = res.perf_metrics
@@ -64,13 +72,16 @@ class Handler(BaseHTTPRequestHandler):
         n = int(self.headers.get("Content-Length", 0))
         req = json.loads(self.rfile.read(n) or b"{}")
         t0 = time.time()
-        text, pt, ct = generate(req.get("messages", []), int(req.get("max_tokens", 512)))
+        max_tokens = int(req.get("max_tokens", 512))
+        text, pt, ct = generate(req.get("messages", []), max_tokens,
+                                float(req.get("temperature", 0.0) or 0.0),
+                                float(req.get("top_p", 1.0) or 1.0), req.get("seed"))
         self._send(200, {
             "id": "ov-" + str(int(t0)),
             "object": "chat.completion",
             "model": STATE["model_id"],
             "choices": [{"index": 0, "message": {"role": "assistant", "content": text},
-                         "finish_reason": "stop"}],
+                         "finish_reason": "length" if ct >= max_tokens else "stop"}],
             "usage": {"prompt_tokens": pt, "completion_tokens": ct, "total_tokens": pt + ct,
                       "seconds": round(time.time() - t0, 3)},
         })

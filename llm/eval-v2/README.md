@@ -17,6 +17,9 @@ Every model is served by the same llama.cpp Vulkan build with identical flags (`
 -c 8192 -np 1`, everything else default). Only the model changes. The one exception is
 gpt-oss-20b, a reasoning model, which runs with `--reasoning-effort low` so its hidden reasoning
 doesn't use up the answer budget. Its reasoning text is excluded from what gets scored.
+The tenth candidate, `qwen2.5-7b-ov-int4`, is Qwen2.5-7B in OpenVINO's int4 format, served on
+the GPU by `harness-alpha/run/ov_server.py` with the same request fields. It checks whether
+OpenVINO's ~43% speed gain costs quality.
 
 ### Coding — 15 tasks, executed (`tasks_coding.py`)
 
@@ -105,7 +108,7 @@ Outputs:
 - `reports/eval_v2/results.md` (tables) and `review_packet.md` / `ballot.txt` (human review)
 - `reports/data/eval-v2/` (raw JSON with every model output and every judgment)
 
-Expected runtime is roughly 2.5 h for the 9 models plus ~1.5 h for the two judges, measured from
+Expected runtime is roughly 2.5 h for the 10 candidates plus ~1.5 h for the two judges, measured from
 smoke-run speeds and extrapolated.
 
 ## Known limitations

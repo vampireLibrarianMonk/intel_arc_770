@@ -39,17 +39,31 @@ CANDIDATES=(
   "qwen2.5-14b|Qwen2.5-14B-Instruct-Q4_K_M.gguf|"
   "deepseek-coder-v2-lite|DeepSeek-Coder-V2-Lite-Instruct-Q4_K_M.gguf|"
   "gpt-oss-20b|gpt-oss-20b-MXFP4.gguf|--reasoning-effort low"
+  # OpenVINO GenAI on the GPU (native int4 IR); served by harness-alpha/run/ov_server.py
+  "qwen2.5-7b-ov-int4|ov:Qwen2.5-7B-Instruct-int4-ov|"
 )
 JUDGES=(
   "qwen2.5-14b|Qwen2.5-14B-Instruct-Q4_K_M.gguf|"
   "gpt-oss-20b|gpt-oss-20b-MXFP4.gguf|--reasoning-effort low"
 )
 if [ "${SMOKE:-0}" = 1 ]; then
-  CANDIDATES=("phi-3.5-mini|Phi-3.5-mini-instruct-Q4_K_M.gguf|")
+  CANDIDATES=("${SMOKE_ROW:-phi-3.5-mini|Phi-3.5-mini-instruct-Q4_K_M.gguf|}")
   JUDGES=("qwen2.5-14b|Qwen2.5-14B-Instruct-Q4_K_M.gguf|")
+  if [ -n "${SMOKE_ROW:-}" ]; then JUDGES=(); fi
 fi
 
-start_server() {  # $1 gguf  $2 flags  $3 log
+start_server() {  # $1 gguf (or ov:<IR dir name>)  $2 flags  $3 log
+  if [[ "$1" == ov:* ]]; then
+    "$REPO/.venv-ov/bin/python" -u "$REPO/llm/harness-alpha/run/ov_server.py" \
+      --model "$REPO/artifacts/ov-models/${1#ov:}" --port $P > "$3" 2>&1 &
+    SRV=$!
+    for _ in $(seq 1 600); do
+      grep -q "serving on" "$3" 2>/dev/null && return 0
+      kill -0 $SRV 2>/dev/null || return 1
+      sleep 1
+    done
+    return 1
+  fi
   # shellcheck disable=SC2086
   "$SRV_BIN" -m "$MODELS_DIR/$1" --port $P --host 127.0.0.1 -ngl 999 -c 8192 -np 1 --no-webui $2 \
     > "$3" 2>&1 &
@@ -72,7 +86,11 @@ fi
 
 for row in "${CANDIDATES[@]}"; do
   IFS='|' read -r name file flags <<< "$row"
-  [ -f "$MODELS_DIR/$file" ] || { note "$name: SKIP (model file missing)"; continue; }
+  if [[ "$file" == ov:* ]]; then
+    [ -f "$REPO/artifacts/ov-models/${file#ov:}/openvino_model.bin" ] || { note "$name: SKIP (OV model missing)"; continue; }
+  else
+    [ -f "$MODELS_DIR/$file" ] || { note "$name: SKIP (model file missing)"; continue; }
+  fi
   if [ -f "$RES/$name.json" ] && [ "${FORCE:-0}" != 1 ]; then note "$name: already done"; continue; fi
   note "=== $name ($file) $flags ==="
   if ! start_server "$file" "$flags" "$LOGS/server_$name.log"; then
