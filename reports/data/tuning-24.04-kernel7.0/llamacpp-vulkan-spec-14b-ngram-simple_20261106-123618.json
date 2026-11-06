@@ -1,0 +1,249 @@
+{
+  "candidate": "llamacpp-vulkan-spec-14b-ngram-simple",
+  "model": "Qwen2.5-14B-Instruct-Q4_K_M.gguf",
+  "base_url": "http://127.0.0.1:8080/v1",
+  "task_set": "hard",
+  "timestamp": "2026-11-06T12:35:12+00:00",
+  "max_tokens": 512,
+  "coding": {
+    "passed": 5,
+    "total": 5,
+    "tasks": [
+      {
+        "id": "longest_palindrome_substring",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 21.4,
+        "raw": "```python\ndef solve(s):\n    def expand_around_center(left, right):\n        while left >= 0 and right < len(s) and s[left] == s[right]:\n            left -= 1\n            right += 1\n        return s[left + 1:right]\n    \n    if len(s) == 0:\n        return \"\"\n    \n    longest_palindrome = \"\"\n    for i in range(len(s)):\n        # Odd length palindromes\n        palindrome1 = expand_around_center(i, i)\n        # Even length palindromes\n        palindrome2 = expand_around_center(i, i + 1)\n        \n        # Update longest_palindrome if a longer palindrome is found\n        if len(palindrome1) > len(longest_palindrome):\n            longest_palindrome = palindrome1\n        if len(palindrome2) > len(longest_palindrome):\n            longest_palindrome = palindrome2\n            \n    return longest_palindrome\n```"
+      },
+      {
+        "id": "edit_distance",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 22.0,
+        "raw": "```python\ndef solve(a, b):\n    len_a, len_b = len(a), len(b)\n    # Initialize the distance matrix\n    dp = [[0 for _ in range(len_b + 1)] for _ in range(len_a + 1)]\n    \n    # Initialize the first row and column of the matrix\n    for i in range(len_a + 1):\n        dp[i][0] = i\n    for j in range(len_b + 1):\n        dp[0][j] = j\n    \n    # Fill the distance matrix\n    for i in range(1, len_a + 1):\n        for j in range(1, len_b + 1):\n            if a[i - 1] == b[j - 1]:\n                dp[i][j] = dp[i - 1][j - 1]  # No operation needed if characters are the same\n            else:\n                dp[i][j] = min(\n                    dp[i - 1][j] + 1,  # Deletion\n                    dp[i][j - 1] + 1,  # Insertion\n                    dp[i - 1][j - 1] + 1  # Substitution\n                )\n    \n    return dp[len_a][len_b]\n```"
+      },
+      {
+        "id": "merge_intervals",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 21.5,
+        "raw": "```python\ndef solve(intervals):\n    if not intervals:\n        return []\n    \n    # Sort intervals based on the start value\n    intervals.sort(key=lambda x: x[0])\n    \n    merged = [intervals[0]]\n    for current_start, current_end in intervals[1:]:\n        last_end = merged[-1][1]\n        \n        if current_start <= last_end:\n            # Overlapping intervals, merge them\n            merged[-1][1] = max(last_end, current_end)\n        else:\n            # Non-overlapping interval, add it to the list\n            merged.append([current_start, current_end])\n    \n    return merged\n```"
+      },
+      {
+        "id": "coin_change_min",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 21.4,
+        "raw": "```python\ndef solve(coins, amount):\n    dp = [float('inf')] * (amount + 1)\n    dp[0] = 0\n    for coin in coins:\n        for x in range(coin, amount + 1):\n            dp[x] = min(dp[x], dp[x - coin] + 1)\n    return dp[amount] if dp[amount] != float('inf') else -1\n```"
+      },
+      {
+        "id": "basic_calculator",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 21.7,
+        "raw": "```python\ndef solve(expr):\n    def operate(op, b, a):\n        if op == '+':\n            return a + b\n        if op == '-':\n            return a - b\n        if op == '*':\n            return a * b\n        if op == '/':\n            return a // b\n\n    def precedence(op):\n        if op in ('+', '-'):\n            return 1\n        if op in ('*', '/'):\n            return 2\n        return 0\n\n    def eval_expr(tokens):\n        def apply_ops(ops, values):\n            op = ops.pop()\n            b = values.pop()\n            a = values.pop()\n            values.append(operate(op, b, a))\n\n        ops, values = [], []\n        i = 0\n        while i < len(tokens):\n            if tokens[i] == ' ':\n                i += 1\n                continue\n            if tokens[i] in ('+', '-', '*', '/'):\n                while ops and precedence(ops[-1]) >= precedence(tokens[i]):\n                    apply_ops(ops, values)\n                ops.append(tokens[i])\n            elif tokens[i] == '(':\n                ops.append(tokens[i])\n            elif tokens[i] == ')':\n                while ops[-1] != '(':\n                    apply_ops(ops, values)\n                ops.pop()  # pop '('\n            else:  # number\n                j = i\n                while j < len(tokens) and tokens[j].isdigit():\n                    j += 1\n                values.append(int(''.join(tokens[i:j])))\n                i = j - 1\n            i += 1\n\n        while ops:\n            apply_ops(ops, values)\n\n        return values[0]\n\n    # Remove spaces from input expression\n    expr = expr.replace(' ', '')\n    return eval_expr(expr)\n\n# Example usage:\n# print(solve(\"3+2*2\"))\n# print(solve(\"3/2\"))\n# print(solve(\" 3+5 / 2 \"))\n```"
+      }
+    ]
+  },
+  "writing": {
+    "constraints_met": 3,
+    "total": 5,
+    "tasks": [
+      {
+        "id": "six_word_story",
+        "passed": true,
+        "detail": {
+          "words": 6,
+          "sentences": 1,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 13.0,
+        "raw": "Lost ring, last gift, grandmother died."
+      },
+      {
+        "id": "constrained_scene",
+        "passed": true,
+        "detail": {
+          "words": 100,
+          "sentences": 5,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:fear",
+              "pass": true
+            },
+            {
+              "name": "forbidden:nervous",
+              "pass": true
+            },
+            {
+              "name": "forbidden:silence",
+              "pass": true
+            },
+            {
+              "name": "required:button",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 21.6,
+        "raw": "The elevator doors slid shut, trapping them in a box of polished steel and flickering lights. She fidgeted, her eyes darting to the floor numbers flashing above the door, each one a countdown to an uncertain release. He leaned against the back wall, fingers tapping a rhythm on the emergency button, a silent plea for escape. The air grew thick with the scent of his cologne and her perfume, mingling into an unexpected harmony. As the elevator shuddered to a stop, they both exhaled, the tension breaking like a dam, yet neither spoke as they stepped out into the hallway."
+      },
+      {
+        "id": "acrostic_code",
+        "passed": true,
+        "detail": {
+          "words": 27,
+          "sentences": 1,
+          "lines": 4,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": true
+            },
+            {
+              "name": "acrostic:CODE",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 19.8,
+        "raw": "Cherishing moments that time do erase\nOnward dreams through the vast starry space\nDawn breaks with whispers of hope anew\nEternal flames in the heart ever grew"
+      },
+      {
+        "id": "explain_to_child",
+        "passed": false,
+        "detail": {
+          "words": 81,
+          "sentences": 4,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:key",
+              "pass": true
+            },
+            {
+              "name": "forbidden:value",
+              "pass": true
+            },
+            {
+              "name": "forbidden:bucket",
+              "pass": true
+            },
+            {
+              "name": "forbidden:hash",
+              "pass": false
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 21.3,
+        "raw": "Imagine you have a big box of crayons, and you want to find the red one really fast. So, you decide to put all the red crayons in one special spot, all the blue crayons in another spot, and so on. Now, whenever you want a red crayon, you just go to the red spot, and there it is! A hash map is like having lots of these special spots for all your toys, so you can find them super quickly."
+      },
+      {
+        "id": "dialogue_subtext",
+        "passed": false,
+        "detail": {
+          "words": 32,
+          "sentences": 3,
+          "lines": 3,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": false
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": false
+            },
+            {
+              "name": "forbidden:curfew",
+              "pass": true
+            },
+            {
+              "name": "forbidden:home",
+              "pass": true
+            },
+            {
+              "name": "forbidden:time",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 19.9,
+        "raw": "I think you should be in when it gets dark outside.\nBut Mom, all my friends get to stay out later.\nPlease, honey, I worry about you when you\u2019re out so late."
+      }
+    ]
+  },
+  "median_tokens_per_sec": 21.4
+}

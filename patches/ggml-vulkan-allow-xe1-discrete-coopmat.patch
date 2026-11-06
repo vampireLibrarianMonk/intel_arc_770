@@ -1,0 +1,13 @@
+--- a/ggml/src/ggml-vulkan/ggml-vulkan.cpp	2026-11-01 06:46:43.000000000 +0000
++++ b/ggml/src/ggml-vulkan/ggml-vulkan.cpp	2026-11-06 12:39:21.894406066 +0000
+@@ -16433,7 +16433,10 @@
+     switch (props.vendorID) {
+     case VK_VENDOR_ID_INTEL:
+         // Only allowing Xe2/Xe3 GPU and integrated Xe GPUs at the moment since older hardware (ex. Arc A770) has performance regressions.
++        // EXPERIMENT (arc-a770-lab): also allow discrete Xe1/Alchemist (Arc A770) on Mesa ANV to
++        // test whether the "performance regressions" noted upstream hold on this stack.
+         return (arch == vk_device_architecture::INTEL_XE2) ||
++            (arch == vk_device_architecture::INTEL_XE1 && props.deviceType == vk::PhysicalDeviceType::eDiscreteGpu) ||
+             (arch == vk_device_architecture::INTEL_XE1 && props.deviceType == vk::PhysicalDeviceType::eIntegratedGpu && driver_props.driverID == vk::DriverId::eIntelProprietaryWindows);
+     case VK_VENDOR_ID_AMD:
+         if (driver_props.driverID == vk::DriverId::eAmdProprietary || driver_props.driverID == vk::DriverId::eAmdOpenSource) {

@@ -1,0 +1,249 @@
+{
+  "candidate": "llamacpp-vulkan-hard-coder7b",
+  "model": "Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf",
+  "base_url": "http://127.0.0.1:8080/v1",
+  "task_set": "hard",
+  "timestamp": "2026-11-06T12:19:32+00:00",
+  "max_tokens": 512,
+  "coding": {
+    "passed": 4,
+    "total": 5,
+    "tasks": [
+      {
+        "id": "longest_palindrome_substring",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 42.3,
+        "raw": "```\ndef solve(s):\n    def expand_around_center(s, left, right):\n        while left >= 0 and right < len(s) and s[left] == s[right]:\n            left -= 1\n            right += 1\n        return s[left + 1:right]\n\n    if not s:\n        return \"\"\n\n    longest_palindrome = \"\"\n    for i in range(len(s)):\n        # Odd length palindromes\n        palindrome1 = expand_around_center(s, i, i)\n        # Even length palindromes\n        palindrome2 = expand_around_center(s, i, i + 1)\n        # Update the longest palindrome found\n        if len(palindrome1) > len(longest_palindrome):\n            longest_palindrome = palindrome1\n        if len(palindrome2) > len(longest_palindrome):\n            longest_palindrome = palindrome2\n\n    return longest_palindrome\n```"
+      },
+      {
+        "id": "edit_distance",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 42.4,
+        "raw": "```\ndef solve(a, b):\n    m, n = len(a), len(b)\n    dp = [[0] * (n + 1) for _ in range(m + 1)]\n    \n    for i in range(m + 1):\n        dp[i][0] = i\n    for j in range(n + 1):\n        dp[0][j] = j\n    \n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                dp[i][j] = dp[i - 1][j - 1]\n            else:\n                dp[i][j] = min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]) + 1\n    \n    return dp[m][n]\n```"
+      },
+      {
+        "id": "merge_intervals",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 41.8,
+        "raw": "```\ndef solve(intervals):\n    if not intervals:\n        return []\n    \n    # Sort intervals by start time\n    intervals.sort(key=lambda x: x[0])\n    \n    merged = []\n    for interval in intervals:\n        # If the list of merged intervals is empty or if the current\n        # interval does not overlap with the previous, simply append it.\n        if not merged or merged[-1][1] < interval[0]:\n            merged.append(interval)\n        else:\n            # Otherwise, there is overlap, so we merge the current and previous\n            # intervals.\n            merged[-1][1] = max(merged[-1][1], interval[1])\n    \n    return merged\n```"
+      },
+      {
+        "id": "coin_change_min",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 42.2,
+        "raw": "```\ndef solve(coins, amount):\n    # Initialize a list to store the minimum coins needed for each amount up to the target amount\n    dp = [float('inf')] * (amount + 1)\n    dp[0] = 0  # Base case: 0 coins are needed to make amount 0\n\n    # Iterate over each coin\n    for coin in coins:\n        # Update the dp array for each amount from coin to the target amount\n        for x in range(coin, amount + 1):\n            dp[x] = min(dp[x], dp[x - coin] + 1)\n\n    # If dp[amount] is still infinity, it means the amount cannot be made with the given coins\n    return dp[amount] if dp[amount] != float('inf') else -1\n```"
+      },
+      {
+        "id": "basic_calculator",
+        "passed": false,
+        "detail": "timeout (>5s) on ('1 + 1',) \u2014 likely infinite loop",
+        "tokens_per_sec": 42.8,
+        "raw": "```\ndef solve(expr):\n    def apply_operator(operators, values):\n        operator = operators.pop()\n        right = values.pop()\n        left = values.pop()\n        if operator == '+':\n            values.append(left + right)\n        elif operator == '-':\n            values.append(left - right)\n        elif operator == '*':\n            values.append(left * right)\n        elif operator == '/':\n            values.append(left // right)\n\n    def greater_precedence(op1, op2):\n        precedence = {'+': 1, '-': 1, '*': 2, '/': 2}\n        return precedence[op1] > precedence[op2]\n\n    operators = []\n    values = []\n    i = 0\n    while i < len(expr):\n        if expr[i].isdigit():\n            j = i\n            while j < len(expr) and expr[j].isdigit():\n                j += 1\n            values.append(int(expr[i:j]))\n            i = j\n        elif expr[i] == '(':\n            operators.append(expr[i])\n            i += 1\n        elif expr[i] == ')':\n            while operators[-1] != '(':\n                apply_operator(operators, values)\n            operators.pop()  # Remove '('\n            i += 1\n        elif expr[i] in '+-*/':\n            while (operators and operators[-1] != '(' and\n                   greater_precedence(operators[-1], expr[i])):\n                apply_operator(operators, values)\n            operators.append(expr[i])\n            i += 1\n\n    while operators:\n        apply_operator(operators, values)\n\n    return values[0]\n```"
+      }
+    ]
+  },
+  "writing": {
+    "constraints_met": 3,
+    "total": 5,
+    "tasks": [
+      {
+        "id": "six_word_story",
+        "passed": true,
+        "detail": {
+          "words": 6,
+          "sentences": 1,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 21.7,
+        "raw": "Lost keys, locked out, heart heavy."
+      },
+      {
+        "id": "constrained_scene",
+        "passed": true,
+        "detail": {
+          "words": 82,
+          "sentences": 6,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:fear",
+              "pass": true
+            },
+            {
+              "name": "forbidden:nervous",
+              "pass": true
+            },
+            {
+              "name": "forbidden:silence",
+              "pass": true
+            },
+            {
+              "name": "required:button",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 41.4,
+        "raw": "The elevator doors slid open, and Sarah stepped in, her eyes scanning the unfamiliar faces. As the doors closed, she pressed the button for the 10th floor, her heart pounding slightly. Beside her, a man in a suit shifted uncomfortably, glancing at his watch. The elevator lurched forward, and Sarah's grip tightened on the handrail. The man shifted again, his eyes darting around the small space. The doors opened on the 10th floor, and Sarah stepped out, the man following closely behind."
+      },
+      {
+        "id": "acrostic_code",
+        "passed": true,
+        "detail": {
+          "words": 18,
+          "sentences": 2,
+          "lines": 4,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": true
+            },
+            {
+              "name": "acrostic:CODE",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 37.7,
+        "raw": "Coding in the night,  \nOver screens, ideas ignite.  \nDebugging, fixing,  \nEvery line a step in the right direction."
+      },
+      {
+        "id": "explain_to_child",
+        "passed": false,
+        "detail": {
+          "words": 55,
+          "sentences": 3,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:key",
+              "pass": true
+            },
+            {
+              "name": "forbidden:value",
+              "pass": true
+            },
+            {
+              "name": "forbidden:bucket",
+              "pass": true
+            },
+            {
+              "name": "forbidden:hash",
+              "pass": false
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 39.7,
+        "raw": "A hash map is like a magical toy box where you can store your favorite toys. You put your toys in the box, and the box knows exactly where each toy is hiding. When you want to find a toy, you just tell the box its name, and it shows you right where it is!"
+      },
+      {
+        "id": "dialogue_subtext",
+        "passed": false,
+        "detail": {
+          "words": 39,
+          "sentences": 7,
+          "lines": 6,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": false
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": true
+            },
+            {
+              "name": "forbidden:curfew",
+              "pass": true
+            },
+            {
+              "name": "forbidden:home",
+              "pass": true
+            },
+            {
+              "name": "forbidden:time",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 39.8,
+        "raw": "Parent: \"You need to be back by midnight.\"\nTeenager: \"I can't stay out that late.\"\nParent: \"I'm worried about your safety.\"\nTeenager: \"I'm old enough to handle myself.\"\nParent: \"But you're not.\"\nTeenager: \"I am, and I'll be fine.\""
+      }
+    ]
+  },
+  "median_tokens_per_sec": 41.8
+}

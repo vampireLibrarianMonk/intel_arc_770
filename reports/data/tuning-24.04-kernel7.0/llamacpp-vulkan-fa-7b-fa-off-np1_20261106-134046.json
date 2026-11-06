@@ -1,0 +1,249 @@
+{
+  "candidate": "llamacpp-vulkan-fa-7b-fa-off-np1",
+  "model": "Qwen2.5-7B-Instruct-Q4_K_M.gguf",
+  "base_url": "http://127.0.0.1:8080/v1",
+  "task_set": "hard",
+  "timestamp": "2026-11-06T13:39:43+00:00",
+  "max_tokens": 512,
+  "coding": {
+    "passed": 4,
+    "total": 5,
+    "tasks": [
+      {
+        "id": "longest_palindrome_substring",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 43.9,
+        "raw": "```python\ndef solve(s):\n    def expand_around_center(left, right):\n        while left >= 0 and right < len(s) and s[left] == s[right]:\n            left -= 1\n            right += 1\n        return s[left + 1:right]\n    \n    if not s:\n        return \"\"\n    \n    longest_palindrome = \"\"\n    for i in range(len(s)):\n        # Odd length palindromes\n        palindrome1 = expand_around_center(i, i)\n        # Even length palindromes\n        palindrome2 = expand_around_center(i, i + 1)\n        \n        # Update the longest palindrome found\n        if len(palindrome1) > len(longest_palindrome):\n            longest_palindrome = palindrome1\n        if len(palindrome2) > len(longest_palindrome):\n            longest_palindrome = palindrome2\n            \n    return longest_palindrome\n```"
+      },
+      {
+        "id": "edit_distance",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 36.7,
+        "raw": "```python\ndef solve(a, b):\n    \"\"\"\n    Calculate the Levenshtein edit distance between two strings a and b.\n\n    Args:\n    a (str): The first string.\n    b (str): The second string.\n\n    Returns:\n    int: The minimum number of single-character insertions, deletions, or substitutions required to change string a into string b.\n    \"\"\"\n    # Lengths of the strings\n    len_a, len_b = len(a), len(b)\n    \n    # Initialize the matrix with zeros\n    dp = [[0] * (len_b + 1) for _ in range(len_a + 1)]\n    \n    # Base cases: deleting all characters of a or b\n    for i in range(len_a + 1):\n        dp[i][0] = i\n    for j in range(len_b + 1):\n        dp[0][j] = j\n    \n    # Fill the matrix\n    for i in range(1, len_a + 1):\n        for j in range(1, len_b + 1):\n            if a[i - 1] == b[j - 1]:\n                dp[i][j] = dp[i - 1][j - 1]\n            else:\n                dp[i][j] = min(dp[i - 1][j],      # deletion\n                               dp[i][j - 1],      # insertion\n                               dp[i - 1][j - 1])  # substitution\n                dp[i][j] += 1\n    \n    # The answer is in the bottom right corner of the matrix\n    return dp[len_a][len_b]\n```"
+      },
+      {
+        "id": "merge_intervals",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 22.2,
+        "raw": "```python\ndef solve(intervals):\n    \"\"\"\n    Merges overlapping intervals and returns a sorted list of merged intervals.\n    \n    :param intervals: List of [start, end] intervals\n    :return: List of merged and sorted intervals\n    \"\"\"\n    if not intervals:\n        return []\n\n    # Sort intervals based on the start time\n    intervals.sort(key=lambda x: x[0])\n\n    merged = [intervals[0]]\n    for current in intervals[1:]:\n        last_merged = merged[-1]\n        if last_merged[1] >= current[0]:\n            # Merge the intervals\n            merged[-1] = [last_merged[0], max(last_merged[1], current[1])]\n        else:\n            merged.append(current)\n\n    return merged\n```"
+      },
+      {
+        "id": "coin_change_min",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 28.7,
+        "raw": "```python\ndef solve(coins, amount):\n    \"\"\"\n    Solve the minimum number of coins needed to make the given amount.\n    \n    :param coins: List of available coin denominations.\n    :param amount: The target amount to make.\n    :return: The minimum number of coins needed to make the amount, or -1 if impossible.\n    \"\"\"\n    # Initialize a list to store the minimum coins needed for each amount up to the target\n    dp = [float('inf')] * (amount + 1)\n    dp[0] = 0  # Base case: 0 coins are needed to make amount 0\n    \n    # Iterate over each amount from 1 to the target\n    for i in range(1, amount + 1):\n        # Check each coin denomination\n        for coin in coins:\n            if i - coin >= 0:\n                # Update the dp value if using this coin results in a smaller number of coins\n                dp[i] = min(dp[i], dp[i - coin] + 1)\n    \n    # Return the result for the target amount, or -1 if it's not possible\n    return dp[amount] if dp[amount] != float('inf') else -1\n```"
+      },
+      {
+        "id": "basic_calculator",
+        "passed": false,
+        "detail": "exec_error: IndexError: pop from empty list",
+        "tokens_per_sec": 32.0,
+        "raw": "```python\ndef solve(expr):\n    def apply_op(op, a, b):\n        if op == '+':\n            return a + b\n        elif op == '-':\n            return a - b\n        elif op == '*':\n            return a * b\n        elif op == '/':\n            return a // b\n\n    def evaluate(expression):\n        stack = []\n        i = 0\n        while i < len(expression):\n            if expression[i].isdigit():\n                num = 0\n                while i < len(expression) and expression[i].isdigit():\n                    num = num * 10 + int(expression[i])\n                    i += 1\n                stack.append(num)\n                i -= 1\n            elif expression[i] in '+-*/':\n                while stack and stack[-1] != '(':\n                    b = stack.pop()\n                    a = stack.pop()\n                    op = stack.pop()\n                    stack.append(apply_op(op, a, b))\n                stack.append(expression[i])\n            elif expression[i] == '(':\n                stack.append(expression[i])\n            elif expression[i] == ')':\n                while stack[-1] != '(':\n                    b = stack.pop()\n                    a = stack.pop()\n                    op = stack.pop()\n                    stack.append(apply_op(op, a, b))\n                stack.pop()  # Remove '(' from stack\n            i += 1\n\n        while stack and len(stack) > 1:\n            b = stack.pop()\n            a = stack.pop()\n            op = stack.pop()\n            stack.append(apply_op(op, a, b))\n\n        return stack[0]\n\n    return evaluate(expr)\n\n# Example usage:\nprint(solve(\"3 + 5 * (2 - 3)\"))  # Output: -4\n```"
+      }
+    ]
+  },
+  "writing": {
+    "constraints_met": 3,
+    "total": 5,
+    "tasks": [
+      {
+        "id": "six_word_story",
+        "passed": true,
+        "detail": {
+          "words": 6,
+          "sentences": 1,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 2.6,
+        "raw": "The sun set, she was gone."
+      },
+      {
+        "id": "constrained_scene",
+        "passed": true,
+        "detail": {
+          "words": 77,
+          "sentences": 5,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:fear",
+              "pass": true
+            },
+            {
+              "name": "forbidden:nervous",
+              "pass": true
+            },
+            {
+              "name": "forbidden:silence",
+              "pass": true
+            },
+            {
+              "name": "required:button",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 18.8,
+        "raw": "The elevator hummed softly as the doors closed, trapping the two strangers in a tight space. The man fidgeted with his tie, his eyes darting to the flickering button lights. She shifted uncomfortably, her fingers brushing against the cool metal of the elevator wall. The button for the top floor blinked red, a stark reminder of their shared destination. Tension coiled between them, each step of the elevator's ascent a slow, deliberate march towards an unspoken understanding."
+      },
+      {
+        "id": "acrostic_code",
+        "passed": true,
+        "detail": {
+          "words": 19,
+          "sentences": 1,
+          "lines": 4,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": true
+            },
+            {
+              "name": "acrostic:CODE",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 7.3,
+        "raw": "Coding dreams into life,  \nOver lines and through strife,  \nDreams woven with care,  \nEvery bit a work of art."
+      },
+      {
+        "id": "explain_to_child",
+        "passed": false,
+        "detail": {
+          "words": 67,
+          "sentences": 2,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": false
+            },
+            {
+              "name": "forbidden:key",
+              "pass": true
+            },
+            {
+              "name": "forbidden:value",
+              "pass": true
+            },
+            {
+              "name": "forbidden:bucket",
+              "pass": true
+            },
+            {
+              "name": "forbidden:hash",
+              "pass": false
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 16.3,
+        "raw": "Imagine you have a big box of crayons, and you want to find a specific crayon really fast. A hash map is like having a magical label on each crayon that tells you exactly where to put it and where to find it, so you can always get the crayon you want super quickly, just like how a library has a system to find any book fast!"
+      },
+      {
+        "id": "dialogue_subtext",
+        "passed": false,
+        "detail": {
+          "words": 34,
+          "sentences": 3,
+          "lines": 3,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": false
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": false
+            },
+            {
+              "name": "forbidden:curfew",
+              "pass": true
+            },
+            {
+              "name": "forbidden:home",
+              "pass": true
+            },
+            {
+              "name": "forbidden:time",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 10.2,
+        "raw": "You're grounded for a week if you're still out when your dad gets off work.  \nWhy do I even need to explain myself to you?  \nBecause I'm your parent, and I set the rules."
+      }
+    ]
+  },
+  "median_tokens_per_sec": 22.2
+}
