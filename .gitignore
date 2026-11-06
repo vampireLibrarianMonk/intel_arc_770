@@ -28,6 +28,7 @@ __pycache__/
 venv/
 .venv-xpu/
 .venv-llm/
+.venv-ov/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
