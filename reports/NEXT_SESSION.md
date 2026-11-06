@@ -19,7 +19,10 @@
 
 Check: `cat artifacts/harness-alpha/PENDING_STATUS.txt`
 
-Then `eval-v2` (systemd user unit, armed 2026-11-06 19:00 UTC) starts automatically: the
+Then `ha-ov-followup` fetches the OpenVINO int4 14B (8.4 GB) and runs the speed gate (≥1.2×
+Vulkan). Check: `cat artifacts/harness-alpha/OV_FOLLOWUP_STATUS.txt`.
+
+Then `eval-v2` (systemd user unit, re-armed 2026-11-06 21:07 UTC) starts automatically: the
 new coding + creative-writing regime (`llm/eval-v2/README.md`) over all 10 candidates (9 GGUF + OpenVINO int4 7B), then both
 judges, then `reports/eval_v2/results.md` + `review_packet.md` + `ballot.txt`. It takes ~4 h
 after the chain completes. Check: `cat artifacts/eval-v2/STATUS.txt`. Once it's done, read

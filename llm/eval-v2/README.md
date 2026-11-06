@@ -19,7 +19,9 @@ gpt-oss-20b, a reasoning model, which runs with `--reasoning-effort low` so its 
 doesn't use up the answer budget. Its reasoning text is excluded from what gets scored.
 The tenth candidate, `qwen2.5-7b-ov-int4`, is Qwen2.5-7B in OpenVINO's int4 format, served on
 the GPU by `harness-alpha/run/ov_server.py` with the same request fields. It checks whether
-OpenVINO's ~43% speed gain costs quality.
+OpenVINO's ~43% speed gain costs quality. `qwen2.5-14b-ov-int4` is added only if
+`harness-alpha/run_ov_followup.sh` measures it at ≥1.2× the speed of llama.cpp Vulkan on the
+same model (marker file `GATE_PASS`). Otherwise it's skipped.
 
 ### Coding — 15 tasks, executed (`tasks_coding.py`)
 

@@ -41,6 +41,7 @@ CANDIDATES=(
   "gpt-oss-20b|gpt-oss-20b-MXFP4.gguf|--reasoning-effort low"
   # OpenVINO GenAI on the GPU (native int4 IR); served by harness-alpha/run/ov_server.py
   "qwen2.5-7b-ov-int4|ov:Qwen2.5-7B-Instruct-int4-ov|"
+  "qwen2.5-14b-ov-int4|ov:Qwen2.5-14B-Instruct-int4-ov|"
 )
 JUDGES=(
   "qwen2.5-14b|Qwen2.5-14B-Instruct-Q4_K_M.gguf|"
@@ -79,15 +80,18 @@ stop_server() { kill "$SRV" 2>/dev/null; wait "$SRV" 2>/dev/null; sleep 3; }
 
 note "eval-v2 started (pid $$, smoke=${SMOKE:-0})"
 if [ "${SKIP_WAIT:-0}" != 1 ]; then
-  note "waiting for download chain to finish (artifacts/harness-alpha/PENDING_STATUS.txt)"
+  note "waiting for download chains to finish (PENDING_STATUS.txt, then OV_FOLLOWUP_STATUS.txt)"
   until grep -q "pending-evals COMPLETE" "$PREFIX/PENDING_STATUS.txt" 2>/dev/null; do sleep 120; done
-  note "download chain complete"
+  until grep -q "ov-followup COMPLETE" "$PREFIX/OV_FOLLOWUP_STATUS.txt" 2>/dev/null; do sleep 120; done
+  note "download chains complete"
 fi
 
 for row in "${CANDIDATES[@]}"; do
   IFS='|' read -r name file flags <<< "$row"
   if [[ "$file" == ov:* ]]; then
     [ -f "$REPO/artifacts/ov-models/${file#ov:}/openvino_model.bin" ] || { note "$name: SKIP (OV model missing)"; continue; }
+    # only OpenVINO models whose speed advantage was measured (run_ov_followup.sh gate)
+    [ -f "$REPO/artifacts/ov-models/${file#ov:}/GATE_PASS" ] || { note "$name: SKIP (did not pass the OpenVINO speed gate)"; continue; }
   else
     [ -f "$MODELS_DIR/$file" ] || { note "$name: SKIP (model file missing)"; continue; }
   fi

@@ -6,6 +6,15 @@ All notable changes to arc-a770-lab. Format follows
 
 ## [Unreleased]
 
+### Added — speed gate for bigger OpenVINO int4 models (2026-11-06)
+- `llm/harness-alpha/run_ov_followup.sh`: after the main downloads, fetches
+  `OpenVINO/Qwen2.5-14B-Instruct-int4-ov` (8.4 GB, sha256-gated). It's included in eval-v2
+  only if its measured GPU generation speed is ≥1.2× llama.cpp Vulkan on the same model
+  (22.68 tok/s tg128). The 7B passed at 1.43×. Gate logic was tested on the real 7B data and
+  on fabricated fail cases.
+- Llama-3.1-8B not added: OpenVINO publishes no int4 conversion, and the third-party ones have
+  ≤62 downloads and unknown conversion settings.
+
 ### Measured — OpenVINO native int4 is 43% faster than Vulkan on the A770 (2026-11-06)
 - `OpenVINO/Qwen2.5-7B-Instruct-int4-ov` on the GPU (NEO 26.40, openvino-genai 2026.4.1):
   60.5 tok/s harness median and 62-64 steady state, vs 42-43 / 44-46 for llama.cpp Vulkan
