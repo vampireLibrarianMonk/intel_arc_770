@@ -1,0 +1,5 @@
+{"cfg": "default", "load_s": 4.8, "tok_s": [62.1, 62.5], "ttft_ms": [36, 33]}
+{"cfg": "kv_f16", "load_s": 5.0, "tok_s": [63.5, 64.2], "ttft_ms": [34, 30]}
+{"cfg": "kv_u8", "load_s": 5.1, "tok_s": [63.2, 63.5], "ttft_ms": [35, 32]}
+{"cfg": "dq32", "load_s": 4.9, "tok_s": [62.5, 62.4], "ttft_ms": [36, 32]}
+{"cfg": "latency", "load_s": 4.7, "tok_s": [62.2, 61.7], "ttft_ms": [36, 32]}

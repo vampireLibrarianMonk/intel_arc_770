@@ -183,9 +183,28 @@ OpenVINO's `KV_CACHE_PRECISION` f16/u8, `DYNAMIC_QUANTIZATION_GROUP_SIZE=32` and
 identical Q4_K_M weights **OpenVINO is ~5-10% slower than llama.cpp Vulkan**, and the task
 scores match.
 
-**Native OpenVINO int4** (`OpenVINO/Qwen2.5-7B-Instruct-int4-ov`, the format the published
-"2x" claims use): downloading; queued to be scored by `llm/harness-alpha/run_pending_evals.sh`.
-Pending.
+**Native OpenVINO int4** (`OpenVINO/Qwen2.5-7B-Instruct-int4-ov`, 4.46 GB vs the GGUF's
+4.68 GB, the format behind the published "2x" claims):
+
+| Qwen2.5-7B | harness median tok/s | steady-state tok/s | hard coding | hard writing |
+|:--|--:|--:|:--:|:--:|
+| llama.cpp Vulkan, Q4_K_M GGUF | 42.0-42.7 | 43.6-45.7 | 4/5 | 2/5 |
+| OpenVINO, same GGUF | 38.4 | 41.5-42.2 | 4/5 | 2/5 |
+| **OpenVINO, native int4** | **60.5** | **62.1-64.2** | 3/5 | 2/5 |
+
+**OpenVINO's own int4 format is ~43% faster than llama.cpp Vulkan** on the same model, at a
+similar file size. So the gain comes from its int4 kernels, not from smaller weights. The
+OpenVINO configs again made no real difference (62.1-64.2 tok/s; f16 KV cache marginally
+best). Load time is 5 s vs 17 s for the GGUF.
+
+Quality caveat: on the hard set it missed `edit_distance` (returned 0 for 'horse'/'ros'). In
+an eval-v2 smoke run it failed that task greedy but passed all 3 sampled attempts. One task in
+one greedy run isn't evidence of a quality loss either way; the 7B OpenVINO int4 is included
+as a candidate in eval-v2, which will settle it over 15 coding tasks and 20 writing samples.
+
+Untested so far: OpenVINO int4 versions of the 14B (`OpenVINO/Qwen2.5-14B-Instruct-int4-ov`)
+and Llama-3.1-8B. If the gain carries over, the 14B could reach ~30 tok/s without speculative
+decoding.
 
 ## Recommendations
 
@@ -194,8 +213,8 @@ Pending.
 3. **Long prompts (large files or documents, ~8K+ tokens):** add `-fa off --cache-ram 0`; it
    cuts response time 31-40% at ~11K tokens. Leave it off for many short multi-conversation
    requests, where the prompt cache helps.
-4. OpenVINO: on identical weights it's no faster than Vulkan. The native int4 result is still
-   pending.
+4. **OpenVINO native int4 is the fastest 7B path measured: 60.5 tok/s vs 42 for Vulkan.**
+   Quality is to be confirmed by eval-v2. The OpenVINO GGUF reader is no faster than Vulkan.
 5. Pending (unattended, `run_pending_evals.sh`): OpenVINO native int4, then gpt-oss-20b with and
    without EAGLE3.
 6. Not run, by choice:

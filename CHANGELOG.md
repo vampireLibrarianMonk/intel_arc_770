@@ -6,6 +6,14 @@ All notable changes to arc-a770-lab. Format follows
 
 ## [Unreleased]
 
+### Measured — OpenVINO native int4 is 43% faster than Vulkan on the A770 (2026-11-06)
+- `OpenVINO/Qwen2.5-7B-Instruct-int4-ov` on the GPU (NEO 26.40, openvino-genai 2026.4.1):
+  60.5 tok/s harness median and 62-64 steady state, vs 42-43 / 44-46 for llama.cpp Vulkan
+  Q4_K_M. The file size is similar, so the gain is the kernels. Hard set 3/5 coding (missed
+  edit_distance greedy) and 2/5 writing; the quality comparison is deferred to eval-v2.
+- `run/ov_server.py` now honours temperature/top_p/seed (it was greedy-only) and reports
+  `finish_reason: length`. eval-v2 gains the OpenVINO candidate `qwen2.5-7b-ov-int4`.
+
 ### Added — eval-v2: real coding + creative-writing evaluation (2026-11-06)
 - Why: the harness-alpha writing score never judged quality. It checked word counts and banned
   words on five short puzzles, and nobody read the outputs. Everything was also greedy and run
@@ -25,7 +33,7 @@ All notable changes to arc-a770-lab. Format follows
   cut-off scene, so calibration rules were added; after that a deliberately bad control
   scored 2.4 vs 5.75 for real attempts.
 - The full run is queued (`run_eval_v2.sh`, unit `eval-v2`): it waits for the download chain,
-  then runs all 9 models and both judges and writes `reports/eval_v2/`.
+  then runs all 10 candidates (9 GGUF + OpenVINO int4 7B) and both judges and writes `reports/eval_v2/`.
 
 ### Added — Intel compute runtime + OpenVINO GPU path; flash-attention mystery solved (2026-11-06)
 - **System change (approved):** installed NEO 26.40.40196.8, IGC 2.42.6, GmmLib 22.10.2

@@ -41,6 +41,7 @@ Prune candidates total ~16.7 GiB. Nothing has been deleted; re-downloading costs
 | fast writing / general | Meta-Llama-3.1-8B, default flags | ~42 |
 | fastest usable | DeepSeek-Coder-V2-Lite (coding only — fails writing constraints) | ~59 |
 | long prompts (~8K+ tokens) | any of the above + `-fa off --cache-ram 0` | 31-40% faster responses at ~11K tokens |
+| fastest 7B (quality pending eval-v2) | Qwen2.5-7B **OpenVINO int4** via `llm/harness-alpha/run/run_openvino.sh` (GPU) | ~60 |
 
 `-fa off` must be paired with `--cache-ram 0`. On its own it halves harness throughput: the
 host-RAM prompt cache takes 2-3 s per request to save/restore without flash attention.
@@ -52,6 +53,7 @@ host-RAM prompt cache takes 2-3 s per request to save/restore without flash atte
 | Qwen2.5-0.5B-Instruct-Q8_0.gguf | draft model for speculative decoding of the Qwen2.5 7B/14B | bartowski/Qwen2.5-0.5B-Instruct-GGUF | on disk, verified |
 | eagle3-gpt-oss-20b-Q8_0.gguf | EAGLE3 draft head for gpt-oss-20b | ggml-org/gpt-oss-20b-GGUF | on disk, verified |
 | gpt-oss-20b-MXFP4.gguf | 20B MoE (~3.6B active), 12.1 GB; leading 16 GB candidate | ggml-org/gpt-oss-20b-GGUF | **downloading** (`.part`), then unscored |
+| `artifacts/ov-models/Qwen2.5-7B-Instruct-int4-ov/` | OpenVINO int4 IR of Qwen2.5-7B (4.46 GB); 60.5 tok/s on the GPU | OpenVINO/Qwen2.5-7B-Instruct-int4-ov | on disk; `openvino_model.bin` sha256-verified |
 
 ## Integrity
 
