@@ -6,6 +6,29 @@ All notable changes to arc-a770-lab. Format follows
 
 ## [Unreleased]
 
+### Changed — root volume grown 100 GB -> 300 GB (2026-11-07)
+- Disk was at 94% (5.9 GB free) after the model downloads. Instead of archiving (measured: zstd
+  saves only 1.3-12.9% on the quantised model files, so a zip would reclaim ~4 GB of 71 GB), the
+  root logical volume was extended with `sudo lvextend -r -L +200G /dev/ubuntu-vg-1/ubuntu-lv`.
+  `/` is now 295 GB with 195 GB free; 162 GB remains unallocated in `ubuntu-vg-1` for later. No
+  files moved, so no script paths changed. Online resize, filesystem state clean.
+- Rollback is not straightforward (shrinking ext4 needs the filesystem unmounted), so growth was
+  kept to +200G. The second drive (`ubuntu-vg` on nvme1n1, an older Ubuntu install) was not touched.
+
+### Added — image generation scaffolding (2026-11-07), `llm/imagegen/`
+- Story-to-illustration pipeline on OpenVINO SDXL: bible (fixed style + character looks), a local
+  LLM that fills a structured scene form, deterministic prompt assembly, render + contact sheet.
+  The plan phase is tested; the render phase is written but not yet run (model still downloading).
+  See `llm/imagegen/README.md` for status and limits.
+- `fetch_hf_repo.py`: resumable, sha256-verified whole-repo downloader.
+
+### Fixed — stalled download connections (2026-11-07)
+- A single connection sat at ~70 KB/s for a long time while a fresh one on the same link got
+  ~580 KB/s. Both fetchers (`imagegen/fetch_hf_repo.py`, `harness-alpha/setup/get_model_generic.sh`)
+  now pass `--speed-limit 150000 --speed-time 30`, so a stalled connection is dropped and reopened
+  with resume. Verified to abort a throttled transfer. Parallel connections do not raise the total
+  (1 connection 560 KB/s, 6 connections 593 KB/s), so the link itself is the cap.
+
 ### Measured — AI reviewer ranking of the blind writing packet (2026-11-07)
 - The assistant read all 40 pieces and ranked each prompt before opening the key
   (`reports/eval_v2/ballot_ai_reviewer.txt`, `ai_reviewer_notes.md`, `ai_reviewer_results.md`).
