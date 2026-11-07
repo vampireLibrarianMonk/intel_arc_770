@@ -78,7 +78,13 @@ same model (marker file `GATE_PASS`). Otherwise it's skipped.
      was cut off.
    - **Calibration rules:** competent output is 4-6; a cut-off piece caps coherence at 3; more
      than 15% off the requested length caps adherence at 5.
-   - **Self-scoring:** a judge's scores of its own outputs are **excluded** from the rankings.
+   - **Self-scoring:** a judge's scores of its own outputs, or of a variant of itself (same
+     weights at a different quantisation or runtime, e.g. Qwen2.5-14B vs its OpenVINO int4), are
+     **excluded** from the rankings. Candidates that therefore have only one judge are flagged.
+   - **Per-judge standardisation:** judges differ in leniency (here 6.85 vs 5.25 mean), so every
+     score is converted to a z-score against that judge's own distribution before averaging. The
+     first version pooled raw scores, which made a candidate rated only by the lenient judge look
+     best; raw per-judge means are still shown in the report.
    - **Smoke-test check:** a deliberately off-task, cliché-ridden control scored 2.4 overall
      while real attempts scored ~5.8. Before the calibration rules were added, the judge
      gave 9-10 to everything, and that's why they exist.
@@ -86,12 +92,22 @@ same model (marker file `GATE_PASS`). Otherwise it's skipped.
      over substance, so treat these scores as a shortlist filter.
 3. **Blind human ranking (primary):** `make_report.py` takes the top 4 writers by judge score
    and writes `reports/eval_v2/review_packet.md`.
+   - **Who is in it:** the highest judge scores, one writer per model family (an OpenVINO int4
+     conversion is represented by its dense twin). Judge ties are common, so the cut is
+     approximate.
    - **The packet:** each prompt has one sample per writer under shuffled labels (A-D,
      reshuffled per prompt). The label→model key goes to `artifacts/eval-v2/review_key.json`,
      outside the reports, so you can't see it while reading.
    - **Ranking:** fill in `reports/eval_v2/ballot.txt` (e.g. `w01_premise_scene: B > D > A > C`)
      and run `python3 llm/eval-v2/tally.py`. It reports Borda points and first places per
      model in `reports/eval_v2/human_results.md`.
+
+### Coding scorer details
+
+Top-level statements of the model's code run one at a time: a crash in a bare example call
+(the model's own demo code) is ignored, while a crash in a function/class/import/assignment, a
+syntax error, a timeout or a failed assert counts as a failure. `rescore.py` re-scores saved
+outputs offline after any scorer change and keeps the old verdict as `ok_strict`.
 
 ## Running it
 
@@ -110,8 +126,14 @@ Outputs:
 - `reports/eval_v2/results.md` (tables) and `review_packet.md` / `ballot.txt` (human review)
 - `reports/data/eval-v2/` (raw JSON with every model output and every judgment)
 
-Expected runtime is roughly 2.5 h for the 10 candidates plus ~1.5 h for the two judges, measured from
-smoke-run speeds and extrapolated.
+Measured runtime of the first full run (03:09 to 05:38 UTC): about 2.5 h for 11 candidates (6-16
+min each, slowest the dense 14B) plus 2 judges (15 and 21 min). The earlier estimate of ~4 h was
+too high.
+
+Reading the packet takes about 70 minutes in full, or about 28 minutes for the six shortest
+prompts (the packet header lists them). Unranked prompts are skipped by `tally.py`. Please don't
+open `reports/data/eval-v2/` or `artifacts/eval-v2/review_key.json` until you've ranked: they
+reveal who wrote what.
 
 ## Known limitations
 

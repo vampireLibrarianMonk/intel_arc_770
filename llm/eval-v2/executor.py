@@ -28,11 +28,24 @@ def _raises(fn, *args, exc=ValueError):
 '''
 
 HARNESS = r'''
-import json, sys
+import ast, json, sys
 ns = {}
 src = open("solution.py").read()
+# Run top-level statements one at a time. A crash in a bare expression/print statement (typically
+# the model's own example usage) must not mask a correct function; a crash while defining
+# functions/classes/imports/assignments is a real failure. SyntaxError is always a failure.
+DEFS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Import, ast.ImportFrom,
+        ast.Assign, ast.AnnAssign)
+ignored = []
 try:
-    exec(compile(src, "solution.py", "exec"), ns)
+    tree = ast.parse(src, "solution.py")
+    for node in tree.body:
+        try:
+            exec(compile(ast.Module([node], []), "solution.py", "exec"), ns)
+        except BaseException as e:
+            if isinstance(node, DEFS):
+                raise
+            ignored.append(f"{type(e).__name__}: {str(e)[:80]}")
 except BaseException as e:
     print("\n__RESULT__" + json.dumps({"ok": False, "detail": f"exec_error: {type(e).__name__}: {e}"}))
     sys.exit(0)
@@ -43,10 +56,11 @@ for i, t in enumerate(tests):
         exec(t, ns)
     except BaseException as e:
         print("\n__RESULT__" + json.dumps({"ok": False, "passed_tests": i, "total_tests": len(tests),
+              "demo_errors_ignored": ignored,
               "detail": f"test {i} failed: {t.strip()[:160]} -> {type(e).__name__}: {str(e)[:160]}"}))
         sys.exit(0)
 print("\n__RESULT__" + json.dumps({"ok": True, "passed_tests": len(tests), "total_tests": len(tests),
-      "detail": "all tests passed"}))
+      "demo_errors_ignored": ignored, "detail": "all tests passed"}))
 '''
 
 
