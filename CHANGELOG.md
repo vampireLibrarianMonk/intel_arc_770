@@ -6,6 +6,14 @@ All notable changes to arc-a770-lab. Format follows
 
 ## [Unreleased]
 
+### Measured — gpt-oss-20b is the best model on the hard set (2026-11-07)
+- gpt-oss-20b MXFP4 (11.27 GiB MoE, `--reasoning-effort low`): **5/5 coding, 4/5 writing,
+  36 tok/s** — the only model to pass all five hard coding tasks, at ~1.6x the Qwen2.5-14B's
+  speed. llama-bench tg128 38.7 (25.4 at 16K context). EAGLE3 speculative decoding did not
+  help (32.4 tok/s, low acceptance): the MoE is already compute-light per token. Raw data in
+  reports/data/tuning-24.04-kernel7.0/. It is a candidate in eval-v2.
+- MODELS.md recommended configs updated: gpt-oss-20b is now the best-quality pick.
+
 ### Added — speed gate for bigger OpenVINO int4 models (2026-11-06)
 - `llm/harness-alpha/run_ov_followup.sh`: after the main downloads, fetches
   `OpenVINO/Qwen2.5-14B-Instruct-int4-ov` (8.4 GB, sha256-gated). It's included in eval-v2

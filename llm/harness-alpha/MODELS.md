@@ -16,6 +16,7 @@ llama.cpp Vulkan (`-ngl 999`, ctx 4096, greedy). Raw data: `reports/data/tuning-
 | Qwen2.5-7B-Instruct | baseline / spec-decode target | 4.36 | 967 | 43.6 | 204 | 4/5 | 2/5 | **keep** — reference for all history in this repo |
 | Phi-3.5-mini-instruct | speed floor | 2.23 | 1463 | 77.6 | 186 | 3/5 | 2/5 | keep — 2.2 GiB, cheap |
 | DeepSeek-Coder-V2-Lite (16B MoE) | MoE speed reference | 9.65 | 1414 | 63.5 | n/a² | 4/5 | 0/5 | keep for now — revisit once gpt-oss-20b is scored |
+| gpt-oss-20b (MXFP4 MoE, ~3.6B active) | best quality overall | 11.27 | 1120 | 38.7 | n/a² | **5/5** | **4/5** | **keep — best scores of any model, only one to pass all 5 coding tasks, at 36 tok/s** |
 | Qwen2.5-Coder-7B-Instruct | coding specialist | 4.36 | n/a³ | 41.8³ | n/a | 4/5 | 3/5 | prune candidate — ties the general 7B on coding |
 | gemma-2-9b-it | tidy prose | 5.36 | 712 | 27.4 | 158 | 3/5 | 2/5 | **prune candidate** — slower and no better than Llama-3.1-8B |
 | Mistral-Nemo-Instruct-2407 (12B) | long-context writer | 6.96 | 641 | 27.7 | 207 | 4/5 | 1/5 | **prune candidate** — slower and worse writing than Llama-3.1-8B |
@@ -37,10 +38,11 @@ Prune candidates total ~16.7 GiB. Nothing has been deleted; re-downloading costs
 
 | use | model + flags | tok/s |
 |:--|:--|--:|
-| best quality (coding) | Qwen2.5-14B + `--spec-type draft-simple -md Qwen2.5-0.5B-Instruct-Q8_0.gguf --spec-draft-ngl 999 --spec-draft-n-max 3` | ~32 |
+| **best quality (coding + writing)** | **gpt-oss-20b MXFP4, `--reasoning-effort low`** (5/5 + 4/5 on the hard set) | ~36 |
+| best quality, dense | Qwen2.5-14B + `--spec-type draft-simple -md Qwen2.5-0.5B-Instruct-Q8_0.gguf --spec-draft-ngl 999 --spec-draft-n-max 3` | ~32 |
 | fast writing / general | Meta-Llama-3.1-8B, default flags | ~42 |
-| fastest usable | DeepSeek-Coder-V2-Lite (coding only — fails writing constraints) | ~59 |
-| long prompts (~8K+ tokens) | any of the above + `-fa off --cache-ram 0` | 31-40% faster responses at ~11K tokens |
+| fastest 7B | Qwen2.5-7B OpenVINO int4 (GPU) | ~60 |
+| long prompts (~8K+ tokens) | any GGUF above + `-fa off --cache-ram 0` | 31-40% faster responses at ~11K tokens |
 | fastest 7B (quality pending eval-v2) | Qwen2.5-7B **OpenVINO int4** via `llm/harness-alpha/run/run_openvino.sh` (GPU) | ~60 |
 
 `-fa off` must be paired with `--cache-ram 0`. On its own it halves harness throughput: the

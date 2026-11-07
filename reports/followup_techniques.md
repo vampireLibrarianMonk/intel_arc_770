@@ -144,9 +144,14 @@ was within ~5% of f16 at 4-16K. Its use is fitting more context, not speed.
 
 ## 4. Models not yet evaluated
 
-- **gpt-oss-20b (MXFP4, 12.1 GB, MoE ~3.6B active)** — the most-cited 16 GB model in current
-  roundups. Downloading via `setup/fetch_followup_models.sh`, together with its EAGLE3 draft
-  head (on disk). About 10 h left at ~0.3 MiB/s. Not yet scored.
+- **gpt-oss-20b (MXFP4, 11.27 GiB, MoE ~3.6B active)** — scored on the hard set at
+  `--reasoning-effort low`: **5/5 coding (the only model to pass `basic_calculator`) and 4/5
+  writing, 36 tok/s** (llama-bench tg128 38.7, falling to 25.4 at 16K context). This is the best
+  result of any model tested: Qwen2.5-14B's coding quality at ~1.6x the speed, and the top
+  writing-constraint score. EAGLE3 speculative decoding (its `eagle3-gpt-oss-20b-Q8_0` draft
+  head) did **not** help — 32.4 tok/s, 4/5 + 4/5, low acceptance — because an 11 GB MoE is
+  already compute-light per token. Caveat: single greedy run; it is a candidate in eval-v2 for
+  the fuller comparison.
 - Exist on HF, not downloaded: Qwen3.5-9B (Q4_K_M 5.7 GB), Gemma-4-26B-A4B MoE (IQ4_XS 14.2 GB —
   tight on 16 GiB with any context).
 

@@ -1,0 +1,249 @@
+{
+  "candidate": "llamacpp-vulkan-gptoss20b",
+  "model": "gpt-oss-20b-MXFP4.gguf",
+  "base_url": "http://127.0.0.1:8080/v1",
+  "task_set": "hard",
+  "timestamp": "2026-11-06T23:22:23+00:00",
+  "max_tokens": 512,
+  "coding": {
+    "passed": 5,
+    "total": 5,
+    "tasks": [
+      {
+        "id": "longest_palindrome_substring",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 36.5,
+        "raw": "```python\ndef solve(s: str) -> str:\n    \"\"\"\n    Return the longest palindromic substring of `s`.  \n    If multiple substrings have the same maximal length, the one with the\n    smallest starting index is returned.\n    \"\"\"\n    n = len(s)\n    if n == 0:\n        return \"\"\n\n    best_start, best_len = 0, 1  # at least one character\n\n    def expand(l: int, r: int) -> None:\n        nonlocal best_start, best_len\n        while l >= 0 and r < n and s[l] == s[r]:\n            l -= 1\n            r += 1\n        # after loop, l+1 .. r-1 is palindrome\n        cur_len = r - l - 1\n        cur_start = l + 1\n        if cur_len > best_len or (cur_len == best_len and cur_start < best_start):\n            best_start, best_len = cur_start, cur_len\n\n    for i in range(n):\n        # odd length palindrome centered at i\n        expand(i, i)\n        # even length palindrome centered between i and i+1\n        if i + 1 < n:\n            expand(i, i + 1)\n\n    return s[best_start:best_start + best_len]\n```"
+      },
+      {
+        "id": "edit_distance",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 36.7,
+        "raw": "```python\ndef solve(a: str, b: str) -> int:\n    \"\"\"\n    Compute the Levenshtein edit distance between strings `a` and `b`.\n    The distance is the minimum number of single-character insertions,\n    deletions, or substitutions required to transform `a` into `b`.\n    \"\"\"\n    m, n = len(a), len(b)\n\n    # If one string is empty, the distance is the length of the other.\n    if m == 0:\n        return n\n    if n == 0:\n        return m\n\n    # Initialize a (m+1) x (n+1) DP table.\n    dp = [[0] * (n + 1) for _ in range(m + 1)]\n\n    # Base cases: transform empty string to prefixes.\n    for i in range(m + 1):\n        dp[i][0] = i  # i deletions\n    for j in range(n + 1):\n        dp[0][j] = j  # j insertions\n\n    # Fill the table.\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                cost = 0  # no operation needed\n            else:\n                cost = 1  # substitution\n\n            dp[i][j] = min(\n                dp[i - 1][j] + 1,      # deletion\n                dp[i][j - 1] + 1,      # insertion\n                dp[i - 1][j - 1] + cost  # substitution or match\n            )\n\n    return dp[m][n]\n```"
+      },
+      {
+        "id": "merge_intervals",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 36.0,
+        "raw": "```python\ndef solve(intervals):\n    \"\"\"\n    Merge all overlapping or touching intervals and return the merged list sorted by start.\n\n    Parameters\n    ----------\n    intervals : List[List[int]]\n        A list of intervals where each interval is represented as [start, end].\n\n    Returns\n    -------\n    List[List[int]]\n        The merged intervals sorted by start.\n    \"\"\"\n    if not intervals:\n        return []\n\n    # Sort intervals by start time\n    intervals.sort(key=lambda x: x[0])\n\n    merged = [intervals[0]]\n    for current in intervals[1:]:\n        last = merged[-1]\n        # If current interval overlaps or touches the last merged interval\n        if current[0] <= last[1]:\n            # Merge by extending the end if needed\n            last[1] = max(last[1], current[1])\n        else:\n            merged.append(current)\n\n    return merged\n```"
+      },
+      {
+        "id": "coin_change_min",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 36.1,
+        "raw": "```python\ndef solve(coins, amount):\n    \"\"\"\n    Return the minimum number of coins needed to make `amount` using unlimited\n    supply of denominations in `coins`. If impossible, return -1.\n    \"\"\"\n    # Edge cases\n    if amount < 0:\n        return -1\n    if amount == 0:\n        return 0\n    if not coins:\n        return -1\n\n    # Initialize DP array: dp[i] = min coins to make amount i\n    INF = amount + 1  # any value > amount is effectively infinity\n    dp = [INF] * (amount + 1)\n    dp[0] = 0\n\n    for coin in coins:\n        if coin <= 0:\n            continue  # ignore non-positive denominations\n        for i in range(coin, amount + 1):\n            if dp[i - coin] + 1 < dp[i]:\n                dp[i] = dp[i - coin] + 1\n\n    return dp[amount] if dp[amount] != INF else -1\n```"
+      },
+      {
+        "id": "basic_calculator",
+        "passed": true,
+        "detail": "all tests passed",
+        "tokens_per_sec": 36.9,
+        "raw": "```python\ndef solve(expr: str) -> int:\n    \"\"\"\n    Evaluate an arithmetic expression containing non\u2011negative integers,\n    +, -, *, / (integer floor division) and parentheses.\n    No use of eval() or external libraries.\n    \"\"\"\n    import re\n\n    # Tokenize: numbers, operators, parentheses\n    tokens = re.findall(r'\\d+|[()+\\-*/]', expr.replace(' ', ''))\n\n    # Recursive descent parser\n    def parse_expr(index: int = 0) -> tuple[int, int]:\n        \"\"\"\n        Parse an expression (handles + and -).\n        Returns (value, next_index).\n        \"\"\"\n        val, index = parse_term(index)\n        while index < len(tokens) and tokens[index] in ('+', '-'):\n            op = tokens[index]\n            index += 1\n            next_val, index = parse_term(index)\n            if op == '+':\n                val += next_val\n            else:\n                val -= next_val\n        return val, index\n\n    def parse_term(index: int) -> tuple[int, int]:\n        \"\"\"\n        Parse a term (handles * and /).\n        Returns (value, next_index).\n        \"\"\"\n        val, index = parse_factor(index)\n        while index < len(tokens) and tokens[index] in ('*', '/'):\n            op = tokens[index]\n            index += 1\n            next_val, index = parse_factor(index)\n            if op == '*':\n                val *= next_val\n            else:\n                # Integer floor division, same as // for non\u2011negative ints\n                val //= next_val\n        return val, index\n\n    def parse_factor(index: int) -> tuple[int, int]:\n        \"\"\"\n        Parse a factor: number or parenthesized expression.\n        Returns (value, next_index).\n        \"\"\"\n        token = tokens[index]\n        if token == '(':\n            val, index = parse_expr(index + 1)\n            if tokens[index] != ')':\n                raise ValueError(\"Mismatched parentheses\")\n            return val, index + 1\n        else:\n            # token is a number\n            return int(token), index + 1\n\n    result, final_index = parse_expr()\n    if final_index != len(tokens):\n        raise ValueError(\"Unexpected token at the end\")\n    return result\n```"
+      }
+    ]
+  },
+  "writing": {
+    "constraints_met": 4,
+    "total": 5,
+    "tasks": [
+      {
+        "id": "six_word_story",
+        "passed": true,
+        "detail": {
+          "words": 6,
+          "sentences": 1,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 33.7,
+        "raw": "He left, and silence followed forever."
+      },
+      {
+        "id": "constrained_scene",
+        "passed": true,
+        "detail": {
+          "words": 94,
+          "sentences": 5,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:fear",
+              "pass": true
+            },
+            {
+              "name": "forbidden:nervous",
+              "pass": true
+            },
+            {
+              "name": "forbidden:silence",
+              "pass": true
+            },
+            {
+              "name": "required:button",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 35.6,
+        "raw": "The elevator doors hiss shut, trapping them in a cramped, humming space. He glances at the panel, fingers hovering over the button for the lobby, while she watches the numbers flicker, her eyes darting to the other side of the shaft. A sudden jolt rattles the metal, and the lights flicker, casting long shadows that seem to creep along the walls. He exhales sharply, the sound echoing off the walls, and presses the button with a decisive click. The elevator shudders to a stop, and the doors slide open, revealing the dim hallway beyond."
+      },
+      {
+        "id": "acrostic_code",
+        "passed": true,
+        "detail": {
+          "words": 23,
+          "sentences": 1,
+          "lines": 4,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": true
+            },
+            {
+              "name": "acrostic:CODE",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 32.0,
+        "raw": "Cascading thoughts in quiet code,  \nOver rivers of logic, they flow,  \nDreams of algorithms in silent mode,  \nEager to solve what we bestow."
+      },
+      {
+        "id": "explain_to_child",
+        "passed": false,
+        "detail": {
+          "words": 56,
+          "sentences": 3,
+          "lines": 1,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_sentences",
+              "pass": true
+            },
+            {
+              "name": "forbidden:key",
+              "pass": true
+            },
+            {
+              "name": "forbidden:value",
+              "pass": true
+            },
+            {
+              "name": "forbidden:bucket",
+              "pass": true
+            },
+            {
+              "name": "forbidden:hash",
+              "pass": false
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 33.4,
+        "raw": "Imagine a big toy box where every toy has its own special spot. When you want a toy, you look at the spot\u2019s picture and pull it out right away, instead of searching the whole box. A hash map is like that toy box\u2014it keeps things in special spots so you can find them super fast."
+      },
+      {
+        "id": "dialogue_subtext",
+        "passed": true,
+        "detail": {
+          "words": 71,
+          "sentences": 7,
+          "lines": 6,
+          "checks": [
+            {
+              "name": "min_words",
+              "pass": true
+            },
+            {
+              "name": "max_words",
+              "pass": true
+            },
+            {
+              "name": "min_lines",
+              "pass": true
+            },
+            {
+              "name": "forbidden:curfew",
+              "pass": true
+            },
+            {
+              "name": "forbidden:home",
+              "pass": true
+            },
+            {
+              "name": "forbidden:time",
+              "pass": true
+            },
+            {
+              "name": "no_repetition_collapse",
+              "pass": true
+            }
+          ]
+        },
+        "tokens_per_sec": 35.2,
+        "raw": "Parent: \"I\u2019m worried you\u2019ll be out past midnight and it\u2019s dangerous.\"  \nTeenager: \"I\u2019m not going to be anywhere near danger, I just need a few more hours.\"  \nParent: \"I\u2019ve set limits because I care about your safety.\"  \nTeenager: \"Limits feel like you\u2019re not trusting me to make good choices.\"  \nParent: \"Trust is earned, and I want you to stay safe.\"  \nTeenager: \"I\u2019ll stay safe, but I also need to feel respected.\""
+      }
+    ]
+  },
+  "median_tokens_per_sec": 36.0
+}
