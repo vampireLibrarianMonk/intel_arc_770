@@ -1,43 +1,29 @@
 # Next session — pick up here
 
-## State (2026-11-06, afternoon)
+## State (2026-11-07)
 
-- Registry + recommended configs: `llm/harness-alpha/MODELS.md`. Full findings:
-  `reports/followup_techniques.md`.
-- Intel compute runtime installed (NEO 26.40 / IGC 2.42.6 / L0 1.34.0) with approval;
-  OpenVINO GenAI sees the A770. On identical GGUF weights it is ~5-10% slower than Vulkan.
-- `-fa off` mystery solved: pair it with `--cache-ram 0`. It's a 31-40% win on long prompts.
+Everything queued has finished: gpt-oss-20b, OpenVINO int4 7B and 14B (14B passed the 1.2x speed
+gate at 1.53x) and the full eval-v2 run (11 candidates, 2 judges). Nothing is running.
 
-## Running unattended
+- Findings: `reports/eval_v2/FINDINGS.md`; tables: `reports/eval_v2/results.md`.
+- Method: `llm/eval-v2/README.md`. Registry and recommended configs:
+  `llm/harness-alpha/MODELS.md`.
 
-`ha-pending` (systemd user unit) runs `llm/harness-alpha/run_pending_evals.sh`:
-1. waits for `openvino_model.bin` of `OpenVINO/Qwen2.5-7B-Instruct-int4-ov` (unit `ha-ov-bin`,
-   4.46 GB at ~0.35 MiB/s, ~3.5 h from 15:15 UTC), then scores it on the hard set and runs the
-   OpenVINO config sweep;
-2. then fetches gpt-oss-20b MXFP4 (11.5 GB left, ~9-10 h), scores it at `--reasoning-effort
-   low` with and without EAGLE3, and runs llama-bench.
+## Waiting on you: the blind writing review
 
-Check: `cat artifacts/harness-alpha/PENDING_STATUS.txt`
+`reports/eval_v2/review_packet.md` has 4 anonymous writers x 10 prompts (about 70 min to read in
+full; the header lists a 28-minute subset). Fill in `reports/eval_v2/ballot.txt` (e.g.
+`w01_premise_scene: B > D > A > C`; leave a line as `_` to skip it), then run
+`python3 llm/eval-v2/tally.py`. It reveals who wrote what and writes
+`reports/eval_v2/human_results.md`. The key lives in `artifacts/eval-v2/review_key.json` (not
+committed; regenerate with `make_report.py` if lost, labels are seeded).
 
-Then `ha-ov-followup` fetches the OpenVINO int4 14B (8.4 GB) and runs the speed gate (≥1.2×
-Vulkan). Check: `cat artifacts/harness-alpha/OV_FOLLOWUP_STATUS.txt`.
+Please avoid `reports/data/eval-v2/` until you've ranked: it shows authorship.
 
-Then `eval-v2` (systemd user unit, re-armed 2026-11-06 21:07 UTC) starts automatically: the
-new coding + creative-writing regime (`llm/eval-v2/README.md`) over all 10 candidates (9 GGUF + OpenVINO int4 7B), then both
-judges, then `reports/eval_v2/results.md` + `review_packet.md` + `ballot.txt`. It takes ~4 h
-after the chain completes. Check: `cat artifacts/eval-v2/STATUS.txt`. Once it's done, read
-the packet, fill in the ballot, and run `python3 llm/eval-v2/tally.py`.
+## Open items
 
-## When it finishes
-
-- Copy `artifacts/harness-alpha/openvino-gpu-int4-7b_*.json`,
-  `llamacpp-vulkan-gptoss20b*_*.json`, `logs/ov_sweep_int4_7b.jsonl`,
-  `logs/llama_bench_gptoss20b.md` into `reports/data/tuning-24.04-kernel7.0/`.
-- Fill §6 (int4) and §4 (gpt-oss) in `reports/followup_techniques.md`, and add rows to
-  `MODELS.md`. For gpt-oss, read the raw outputs: a reasoning model can run out of the
-  512-token budget before answering, which would be a harness artifact, not a quality result.
-
-## Not run, by choice
-
-- llama.cpp SYCL: Vulkan is faster here and upstream agrees; needs a multi-GB oneAPI download.
-- `xe` kernel driver: needs a reboot with kernel parameters changed, so do it while present.
+1. Add your own prompts to `llm/eval-v2/user_prompts/*.txt` and rerun (resumable) if the built-in
+   ones don't reflect your real use. Judge and report again with `FORCE=1` only where needed.
+2. gpt-oss-20b ran at low reasoning effort and overshoots requested lengths; try `medium`.
+3. `xe` kernel driver and llama.cpp SYCL remain untested by choice (see
+   `reports/followup_techniques.md`).

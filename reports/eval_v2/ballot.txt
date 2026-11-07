@@ -1,0 +1,12 @@
+# Rank best to worst, e.g.  w01_premise_scene: B > D > A > C
+
+w01_premise_scene: _ > _ > _ > _
+w02_style_continuation: _ > _ > _ > _
+w03_revision: _ > _ > _ > _
+w04_subtext_dialogue: _ > _ > _ > _
+w05_poem: _ > _ > _ > _
+w06_voice_monologue: _ > _ > _ > _
+w07_mystery_opening: _ > _ > _ > _
+w08_humor: _ > _ > _ > _
+w09_flash_twist: _ > _ > _ > _
+w10_sensory_setting: _ > _ > _ > _

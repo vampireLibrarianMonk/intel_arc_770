@@ -6,6 +6,28 @@ All notable changes to arc-a770-lab. Format follows
 
 ## [Unreleased]
 
+### Measured — eval-v2 first full run (2026-11-07)
+- 11 candidates x 15 coding tasks (greedy + 3 sampled) and 10 writing prompts x 2 samples, 2
+  blind judges; total 2.5 h. Results: `reports/eval_v2/results.md`; interpretation and caveats:
+  `reports/eval_v2/FINDINGS.md`.
+- **Coding:** gpt-oss-20b leads clearly (13/15 greedy, 41/45 sampled vs 10/15 and <=29/45 for the
+  rest). OpenVINO int4 keeps the 14B's quality (10/15 either way) at 1.46x the speed; the 7B is
+  1.31x faster with one task fewer, inconclusive.
+- **Writing:** judges separate tiers, not the top six. Specialised/tiny models write worse.
+  gpt-oss-20b has the best judged craft/originality/voice but ignores requested lengths.
+  Human ranking still pending.
+- OpenVINO int4 14B passed its speed gate (34.8 vs 22.68 tok/s Vulkan, 1.53x).
+
+### Fixed — eval-v2 scoring (2026-11-07)
+- Judge scores are standardised per judge. Pooling raw scores made gpt-oss-20b look #1 and
+  Qwen2.5-14B weak because each was rated by only one (lenient / harsh) judge. A judge's scores
+  of a variant of itself (Qwen2.5-14B vs its OpenVINO int4) are now excluded too. Judge rank
+  agreement on models both can rate is 0.93 (the earlier 0.75 included self-scores).
+- The coding executor no longer aborts when a model's own example-usage code crashes; `rescore.py`
+  re-scored all 660 saved attempts: no verdict changed.
+- Review shortlist is one writer per model family. Packet header now gives reading time (~70 min,
+  28 min quick path).
+
 ### Measured — gpt-oss-20b is the best model on the hard set (2026-11-07)
 - gpt-oss-20b MXFP4 (11.27 GiB MoE, `--reasoning-effort low`): **5/5 coding, 4/5 writing,
   36 tok/s** — the only model to pass all five hard coding tasks, at ~1.6x the Qwen2.5-14B's
