@@ -53,7 +53,8 @@ while :; do
   cur=0; [ -f "$DEST.part" ] && cur="$(stat -c %s "$DEST.part")"
   [ "$cur" -ge "$WANT_SIZE" ] && break
   log "pass $attempt: $((cur / 1048576)) / $((WANT_SIZE / 1048576)) MiB"
-  hf_curl -L --fail -sS --retry 5 --retry-delay 5 -C - -o "$DEST.part" "$URL" || true
+  # --speed-limit/--speed-time: drop and reopen a connection stuck under 150 KB/s for 30 s (resumes with -C -)
+  hf_curl -L --fail -sS --retry 5 --retry-delay 5 --speed-limit 150000 --speed-time 30 -C - -o "$DEST.part" "$URL" || true
   sleep 3
 done
 
