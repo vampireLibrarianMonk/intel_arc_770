@@ -7,11 +7,28 @@ art style stays fixed. Built on OpenVINO GenAI (GPU) with OpenVINO's pre-convert
 
 | part | state |
 |:--|:--|
-| `fetch_hf_repo.py` — resumable, sha256-verified repo download | used for the SDXL download (running) |
-| `illustrate.py plan` / `run_plan.sh` — story + bible → `scenes.json` via a local LLM | **tested** with Llama-3.1-8B and gpt-oss-20b on the example story |
+| `fetch_hf_repo.py` — resumable, sha256-verified repo download | used for the SDXL download (done, hashes verified) |
+| `illustrate.py plan` / `run_plan.sh` — story + bible → `scenes.json` via a local LLM | **tested** with Llama-3.1-8B and gpt-oss-20b |
 | `illustrate.py reassemble` — rebuild prompts after editing the bible | **tested** |
-| `gen.py`, `illustrate.py render` — SDXL on the GPU, PNG + JSON sidecar, contact sheet | **written, NOT yet run**: waiting on the SDXL model download (3.5 GB at ~0.57 MB/s) |
-| Character consistency across scenes | **unproven**; the design keeps character text fixed, but whether SDXL renders the same face is only known once images exist. LoRA adapters are supported by the pipeline and are the next step if it isn't consistent enough |
+| `gen.py`, `illustrate.py render` — SDXL int8 on the GPU, PNG + JSON sidecar, contact sheet | **tested**: 1024x1024, 25 steps, **~8.9 s per image** once warm (first image ~11 s; one-time model load ~16 s) |
+| Character consistency across scenes | **partial** (see below) |
+
+### First consistency test (example story, 3 scenes x 2 variants, one run)
+
+- **Held:** the clothing (green coat appears in every image with Mara), the old harbourmaster
+  (white beard, dark coat, same desk-and-clocks room in both variants), and the overall ink and
+  watercolor look. Pinned location shots worked (wide establishing shots where requested).
+- **Did not hold:** Mara's hair. The bible says "short dark braid"; the six images show a dark bun,
+  a dark ponytail, no figure at all (one variant of scene 3 omitted her), and an orange-blond
+  woman. No image shows a braid. Faces cannot be compared (back views and small figures).
+- **Other defects:** a yellow tint bled from the lantern onto the pier planks in one image, and the
+  scene 3 prompt was 56 words (over the ~55 ceiling) while those images are visibly more saturated
+  than the "muted" style asked for; that is consistent with the style tail being cut off, but it
+  was not isolated.
+- **Implication:** plain-text character descriptions fix *clothing and props* well but not *hair or
+  face*. Options, in order of effort: make characters identifiable by strong simple features (a
+  vivid garment colour, a distinctive prop, a hair colour that is repeated); shorten prompts; train a
+  small LoRA per main character (the pipeline accepts adapters).
 
 ## How it works
 
