@@ -9,16 +9,16 @@ gate at 1.53x) and the full eval-v2 run (11 candidates, 2 judges). Nothing is ru
 - Method: `llm/eval-v2/README.md`. Registry and recommended configs:
   `llm/harness-alpha/MODELS.md`.
 
-## Waiting on you: the blind writing review
+## Writing quality: AI-reviewer result in, human check still open
 
-`reports/eval_v2/review_packet.md` has 4 anonymous writers x 10 prompts (about 70 min to read in
-full; the header lists a 28-minute subset). Fill in `reports/eval_v2/ballot.txt` (e.g.
-`w01_premise_scene: B > D > A > C`; leave a line as `_` to skip it), then run
-`python3 llm/eval-v2/tally.py`. It reveals who wrote what and writes
-`reports/eval_v2/human_results.md`. The key lives in `artifacts/eval-v2/review_key.json` (not
-committed; regenerate with `make_report.py` if lost, labels are seeded).
-
-Please avoid `reports/data/eval-v2/` until you've ranked: it shows authorship.
+The assistant ranked the blind packet itself (Mistral-Nemo-12B 22, gpt-oss-20b 21, Qwen2.5-14B 10,
+Llama-3.1-8B 7 Borda points; see `reports/eval_v2/FINDINGS.md`). That is one model's opinion. If
+you want an independent human check, `reports/eval_v2/review_packet.md` is unchanged: rank
+`ballot.txt` (e.g. `w01_premise_scene: B > D > A > C`; skip lines with `_`; the six shortest
+prompts take about 28 minutes), then run `python3 llm/eval-v2/tally.py`.
+The key is in `artifacts/eval-v2/review_key.json` (not committed; regenerable with
+`make_report.py`). `reports/data/eval-v2/` and `ai_reviewer_*` show authorship, so avoid them
+until you have ranked.
 
 ## Open items
 

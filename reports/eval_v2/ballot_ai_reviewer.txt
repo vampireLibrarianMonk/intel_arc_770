@@ -1,0 +1,14 @@
+# AI reviewer ballot (Kiro, a language model) -- NOT the independent human ranking.
+# Written after reading all 40 pieces and BEFORE opening artifacts/eval-v2/review_key.json.
+# Rank best to worst.
+
+w01_premise_scene: A > D > C > B
+w02_style_continuation: B > A > C > D
+w03_revision: C > B > D > A
+w04_subtext_dialogue: A > C > B > D
+w05_poem: D > A > B > C
+w06_voice_monologue: D > B > C > A
+w07_mystery_opening: B > D > A > C
+w08_humor: D > B > C > A
+w09_flash_twist: A > D > B > C
+w10_sensory_setting: A > D > B > C

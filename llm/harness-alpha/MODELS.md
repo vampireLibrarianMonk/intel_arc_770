@@ -38,7 +38,8 @@ Prune candidates total ~16.7 GiB. Nothing has been deleted; re-downloading costs
 
 | use | model + flags | tok/s |
 |:--|:--|--:|
-| **best quality (coding + writing)** | **gpt-oss-20b MXFP4, `--reasoning-effort low`** (5/5 + 4/5 on the hard set) | ~36 |
+| **best overall (coding + writing)** | **gpt-oss-20b MXFP4, `--reasoning-effort low`**: top of eval-v2 coding (13/15, next best 10/15) and tied top writer in the AI-reviewer read; it overshoots requested lengths, so state limits firmly | ~36 |
+| best writing, if length matters | Mistral-Nemo-12B (tied with gpt-oss as top writer in the AI-reviewer read, follows length well) | ~28 |
 | best quality, dense | Qwen2.5-14B + `--spec-type draft-simple -md Qwen2.5-0.5B-Instruct-Q8_0.gguf --spec-draft-ngl 999 --spec-draft-n-max 3` | ~32 |
 | fast writing / general | Meta-Llama-3.1-8B, default flags | ~42 |
 | fastest 7B | Qwen2.5-7B OpenVINO int4 (GPU) | ~60 |

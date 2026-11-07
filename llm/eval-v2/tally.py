@@ -21,6 +21,8 @@ def main():
     ap.add_argument("--ballot", default=os.path.join(ROOT, "reports/eval_v2/ballot.txt"))
     ap.add_argument("--key", default=os.path.join(ROOT, "artifacts/eval-v2/review_key.json"))
     ap.add_argument("--out", default=os.path.join(ROOT, "reports/eval_v2/human_results.md"))
+    ap.add_argument("--label", default="blind human ranking",
+                    help="who ranked, e.g. 'AI reviewer ranking (a language model, not a human)'")
     a = ap.parse_args()
     key = json.load(open(a.key))
     pts, firsts, counted = collections.Counter(), collections.Counter(), 0
@@ -38,7 +40,7 @@ def main():
         firsts[key[m[1]][order[0]]] += 1
         counted += 1
     rows = sorted(pts, key=lambda c: (-pts[c], -firsts[c]))
-    md = ["# eval-v2 blind human ranking", "", f"Prompts ranked: {counted}.", "",
+    md = [f"# eval-v2 {a.label}", "", f"Prompts ranked: {counted}.", "",
           "| writer | Borda points | first places |", "|:--|--:|--:|"]
     md += [f"| {c} | {pts[c]} | {firsts[c]} |" for c in rows]
     open(a.out, "w").write("\n".join(md) + "\n")

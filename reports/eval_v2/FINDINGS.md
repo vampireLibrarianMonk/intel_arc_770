@@ -62,10 +62,35 @@ little about gpt-oss-20b or Qwen2.5-14B, which only one judge can rate.
 - Three candidates (gpt-oss-20b and the two Qwen2.5-14B variants) were scored by one judge only
   because a judge cannot rate itself or a variant of itself. Compare those with extra caution.
 
-**Human review.** `review_packet.md` holds four writers: Qwen2.5-14B, Llama-3.1-8B,
-Mistral-Nemo-12B and gpt-oss-20b. Rule: top judge scores, one per model family. The top six are
-within noise, so the four-of-six cut is nearly arbitrary, and your ranking is what settles it.
-It's about 70 minutes to read in full, or about 28 minutes for the six shortest prompts.
+**AI reviewer ranking (not a human).** I (the assistant that built this harness) read all 40 pieces
+in the blind packet and ranked each prompt *before* opening the answer key; the ballot and
+per-prompt reasons are in `ballot_ai_reviewer.txt` and `ai_reviewer_notes.md`. It is a third
+opinion next to the two judge models, not the independent human check. Borda points (max 30):
+
+| writer | points | first places | average rank (1 = best) |
+|:--|--:|--:|--:|
+| Mistral-Nemo-12B | 22 | 5 | 1.8 |
+| gpt-oss-20b | 21 | 4 | 1.9 |
+| Qwen2.5-14B | 10 | 1 | 3.0 |
+| Llama-3.1-8B | 7 | 0 | 3.3 |
+
+- **Two clear tiers and one tie:** Mistral-Nemo and gpt-oss-20b are tied at the top (one point
+  apart over ten prompts, which is nothing), and both beat Qwen2.5-14B and Llama-3.1-8B.
+- **Where it agrees with the judges:** gpt-oss-20b is a strong writer on craft and voice. Where
+  it disagrees: the judges put Qwen2.5-14B and Llama-3.1-8B at the top of the group, but I ranked
+  them last, mostly for generic, telling prose (letters that announce "from beyond the grave",
+  summary instead of scene). So the judge ordering within the top tier did not survive a human-style
+  read.
+- **I weighted craft over length.** gpt-oss had 6 of 10 samples in the requested length range and
+  Llama 10 of 10, yet I ranked gpt-oss higher. A reader who needs exact lengths would rank
+  differently.
+- **Limits:** one rater, one sample per writer per prompt (4 writers, 10 prompts), no second
+  read. A language model may favour the prose habits of other language models. Treat the ranking
+  as a hypothesis for you to confirm or overturn with your own ranking in `ballot.txt`.
+
+**Human review.** Still optional but valuable: `review_packet.md` (about 70 minutes in full or 28
+for the six shortest prompts) and `ballot.txt` are untouched, so a human ranking can be tallied
+the same way (`python3 llm/eval-v2/tally.py`) and compared with the one above.
 
 ## Changes made while analysing (disclosed)
 

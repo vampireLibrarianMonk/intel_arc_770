@@ -6,6 +6,13 @@ All notable changes to arc-a770-lab. Format follows
 
 ## [Unreleased]
 
+### Measured — AI reviewer ranking of the blind writing packet (2026-11-07)
+- The assistant read all 40 pieces and ranked each prompt before opening the key
+  (`reports/eval_v2/ballot_ai_reviewer.txt`, `ai_reviewer_notes.md`, `ai_reviewer_results.md`).
+  Borda (max 30): Mistral-Nemo-12B 22, gpt-oss-20b 21, Qwen2.5-14B 10, Llama-3.1-8B 7. Not a
+  human ranking and not independent of the harness author; the human ballot is still open.
+- `tally.py --label` so a non-human ranking cannot be mistaken for the human one.
+
 ### Measured — eval-v2 first full run (2026-11-07)
 - 11 candidates x 15 coding tasks (greedy + 3 sampled) and 10 writing prompts x 2 samples, 2
   blind judges; total 2.5 h. Results: `reports/eval_v2/results.md`; interpretation and caveats:
