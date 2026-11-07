@@ -1,0 +1,27 @@
+{
+  "title": "Kessel Point",
+  "style": "storybook watercolor illustration, soft muted palette, ink linework, moody",
+  "negative": "photo, 3d render, blurry, deformed hands, extra fingers, text, watermark, signature",
+  "characters": {
+    "Mara": {
+      "look": "Mara, young woman, short dark braid, green wool coat, scarf"
+    },
+    "Harbourmaster": {
+      "look": "old harbourmaster, white beard, black oilskin coat, weathered face"
+    }
+  },
+  "locations": {
+    "pier": {
+      "look": "wooden pier, grey sea, lobster crates, yellow lantern on a post",
+      "shot": "wide establishing shot"
+    },
+    "office": {
+      "look": "cramped wooden harbour office, scarred desk, stopped ship's clock",
+      "shot": "medium shot"
+    },
+    "lighthouse": {
+      "look": "tall white lighthouse on a cliff, rotating beam, night sky with stars",
+      "shot": "wide establishing shot, low angle"
+    }
+  }
+}
